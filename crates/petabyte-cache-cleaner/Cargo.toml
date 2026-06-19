@@ -1,0 +1,21 @@
+[package]
+name = "petabyte-cache-cleaner"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte developer cache cleaner — YAML rule engine, safe removal"
+
+[lints]
+workspace = true
+
+[lib]
+name = "petabyte_cache_cleaner"
+
+[dependencies]
+petabyte-shared-models = { path = "../petabyte-shared-models" }
+petabyte-shared = { path = "../petabyte-shared" }
+serde.workspace = true
+serde_yaml.workspace = true
+thiserror.workspace = true
+log.workspace = true

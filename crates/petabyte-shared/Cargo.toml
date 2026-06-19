@@ -1,0 +1,17 @@
+[package]
+name = "petabyte-shared"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte shared utilities — error types, constants, platform utils"
+
+[lints]
+workspace = true
+
+[lib]
+name = "petabyte_shared"
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true

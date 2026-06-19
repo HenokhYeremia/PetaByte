@@ -1,0 +1,22 @@
+[package]
+name = "petabyte-scanner"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte parallel filesystem scanner — jwalk traversal, filter, checkpoint"
+
+[lints]
+workspace = true
+
+[lib]
+name = "petabyte_scanner"
+
+[dependencies]
+petabyte-shared-models = { path = "../petabyte-shared-models" }
+petabyte-shared = { path = "../petabyte-shared" }
+jwalk.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+log.workspace = true
+parking_lot.workspace = true

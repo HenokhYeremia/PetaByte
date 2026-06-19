@@ -1,0 +1,23 @@
+[package]
+name = "petabyte-core-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte application layer — use cases orchestrate domain ports"
+
+[lints]
+workspace = true
+
+[lib]
+name = "petabyte_core_engine"
+
+[dependencies]
+petabyte-shared-models = { path = "../petabyte-shared-models" }
+petabyte-shared = { path = "../petabyte-shared" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+log.workspace = true
+chrono.workspace = true
+uuid.workspace = true

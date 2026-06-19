@@ -1,0 +1,40 @@
+[package]
+name = "petabyte-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte composition root — Tauri commands, events, dependency wiring"
+
+[lints]
+workspace = true
+
+[lib]
+name = "petabyte_app"
+
+[features]
+default = ["scanner", "hasher", "duplicate-detector", "cache-cleaner", "smart-move", "health-score", "database"]
+scanner = ["dep:petabyte-scanner"]
+hasher = ["dep:petabyte-hasher"]
+duplicate-detector = ["dep:petabyte-duplicate-detector"]
+cache-cleaner = ["dep:petabyte-cache-cleaner"]
+smart-move = ["dep:petabyte-smart-move"]
+health-score = ["dep:petabyte-health-score"]
+database = ["dep:petabyte-database"]
+
+[dependencies]
+petabyte-shared-models = { path = "../petabyte-shared-models" }
+petabyte-shared = { path = "../petabyte-shared" }
+petabyte-core-engine = { path = "../petabyte-core-engine" }
+petabyte-scanner = { path = "../petabyte-scanner", optional = true }
+petabyte-database = { path = "../petabyte-database", optional = true }
+petabyte-hasher = { path = "../petabyte-hasher", optional = true }
+petabyte-duplicate-detector = { path = "../petabyte-duplicate-detector", optional = true }
+petabyte-cache-cleaner = { path = "../petabyte-cache-cleaner", optional = true }
+petabyte-smart-move = { path = "../petabyte-smart-move", optional = true }
+petabyte-health-score = { path = "../petabyte-health-score", optional = true }
+tauri.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+log.workspace = true

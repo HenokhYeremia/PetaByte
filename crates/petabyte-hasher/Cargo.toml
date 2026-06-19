@@ -1,0 +1,21 @@
+[package]
+name = "petabyte-hasher"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte tiered hashing engine — Blake3 with partial + full hash + cache"
+
+[lints]
+workspace = true
+
+[lib]
+name = "petabyte_hasher"
+
+[dependencies]
+petabyte-shared-models = { path = "../petabyte-shared-models" }
+petabyte-shared = { path = "../petabyte-shared" }
+blake3.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+log.workspace = true

@@ -1,0 +1,67 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/petabyte-shared-models",
+    "crates/petabyte-shared",
+    "crates/petabyte-database",
+    "crates/petabyte-scanner",
+    "crates/petabyte-hasher",
+    "crates/petabyte-duplicate-detector",
+    "crates/petabyte-cache-cleaner",
+    "crates/petabyte-smart-move",
+    "crates/petabyte-health-score",
+    "crates/petabyte-core-engine",
+    "crates/petabyte-app",
+    "src-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/username/petabyte"
+description = "PetaByte — Intelligent storage analysis and optimization desktop application"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+thiserror = "2"
+tauri = "2"
+tauri-build = "2"
+rusqlite = { version = "0.34", features = ["bundled"] }
+jwalk = "0.8"
+blake3 = "1"
+trash = "5"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+log = "0.4"
+env_logger = "0.11"
+parking_lot = "0.12"
+rayon = "1"
+tokio = { version = "1", features = ["full"] }
+notify = "7"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
+overflow-checks = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+overflow-checks = true
+
+[workspace.metadata.cargo-deny]
+targets = [
+    { triple = "x86_64-pc-windows-msvc" },
+    { triple = "x86_64-unknown-linux-gnu" },
+    { triple = "x86_64-apple-darwin" },
+    { triple = "aarch64-apple-darwin" },
+]

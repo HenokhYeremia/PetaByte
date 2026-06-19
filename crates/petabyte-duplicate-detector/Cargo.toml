@@ -1,0 +1,20 @@
+[package]
+name = "petabyte-duplicate-detector"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte duplicate detection engine — 5-tier hashing pipeline"
+
+[lints]
+workspace = true
+
+[lib]
+name = "petabyte_duplicate_detector"
+
+[dependencies]
+petabyte-shared-models = { path = "../petabyte-shared-models" }
+petabyte-shared = { path = "../petabyte-shared" }
+serde.workspace = true
+thiserror.workspace = true
+log.workspace = true

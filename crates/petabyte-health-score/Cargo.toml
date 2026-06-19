@@ -1,0 +1,21 @@
+[package]
+name = "petabyte-health-score"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte storage health scoring engine — 7-factor weighted scoring"
+
+[lints]
+workspace = true
+
+[lib]
+name = "petabyte_health_score"
+
+[dependencies]
+petabyte-shared-models = { path = "../petabyte-shared-models" }
+petabyte-shared = { path = "../petabyte-shared" }
+serde.workspace = true
+thiserror.workspace = true
+log.workspace = true
+chrono.workspace = true

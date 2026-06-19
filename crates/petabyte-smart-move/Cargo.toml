@@ -1,0 +1,21 @@
+[package]
+name = "petabyte-smart-move"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte safe file mover — 6-phase journal-first pipeline with undo"
+
+[lints]
+workspace = true
+
+[lib]
+name = "petabyte_smart_move"
+
+[dependencies]
+petabyte-shared-models = { path = "../petabyte-shared-models" }
+petabyte-shared = { path = "../petabyte-shared" }
+serde.workspace = true
+thiserror.workspace = true
+log.workspace = true
+trash.workspace = true

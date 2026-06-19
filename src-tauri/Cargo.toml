@@ -1,0 +1,21 @@
+[package]
+name = "petabyte"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte desktop application — Tauri shell"
+
+[lints]
+workspace = true
+
+[build-dependencies]
+tauri-build = { workspace = true, features = [] }
+
+[dependencies]
+petabyte-app = { path = "../crates/petabyte-app", features = ["default"] }
+tauri.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+log.workspace = true
+env_logger.workspace = true

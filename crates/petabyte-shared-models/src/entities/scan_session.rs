@@ -1,0 +1,1 @@
+// TODO: ScanSession, ScanStatus entities

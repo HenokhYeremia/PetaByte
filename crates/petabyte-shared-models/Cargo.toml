@@ -1,0 +1,19 @@
+[package]
+name = "petabyte-shared-models"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte domain layer — entities, value objects, and port traits"
+
+[lints]
+workspace = true
+
+[lib]
+name = "petabyte_shared_models"
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+chrono.workspace = true

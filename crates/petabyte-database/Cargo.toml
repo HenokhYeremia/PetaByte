@@ -1,0 +1,22 @@
+[package]
+name = "petabyte-database"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "PetaByte SQLite database layer — connection, migrations, repositories"
+
+[lints]
+workspace = true
+
+[lib]
+name = "petabyte_database"
+
+[dependencies]
+petabyte-shared-models = { path = "../petabyte-shared-models" }
+petabyte-shared = { path = "../petabyte-shared" }
+rusqlite.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+log.workspace = true
+parking_lot.workspace = true
