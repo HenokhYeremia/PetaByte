@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::path::Path;
+use std::sync::Arc;
 
 use petabyte_shared_models::entities::MoveOperation;
 use petabyte_shared_models::ports::{FileOpPort, MoveJournalPort};
@@ -19,22 +19,14 @@ impl SmartMoveUseCase {
     }
 
     pub fn move_file(&self, request: &MoveRequest) -> Result<MoveResultDto, EngineError> {
-        let source = FilePath::new(&request.source_path).map_err(|e| {
-            EngineError::Validation(format!("Invalid source path: {}", e))
-        })?;
-        let dest = FilePath::new(&request.destination_path).map_err(|e| {
-            EngineError::Validation(format!("Invalid destination path: {}", e))
-        })?;
+        let source = FilePath::new(&request.source_path)
+            .map_err(|e| EngineError::Validation(format!("Invalid source path: {e}")))?;
+        let dest = FilePath::new(&request.destination_path)
+            .map_err(|e| EngineError::Validation(format!("Invalid destination path: {e}")))?;
 
-        let operation = MoveOperation::new(
-            source.clone(),
-            dest.clone(),
-            request.file_size,
-        );
+        let operation = MoveOperation::new(source.clone(), dest.clone(), request.file_size);
 
-        self.journal
-            .record(&operation)
-            .map_err(EngineError::Port)?;
+        self.journal.record(&operation).map_err(EngineError::Port)?;
 
         if request.use_trash {
             self.file_op
@@ -86,9 +78,8 @@ impl SmartMoveUseCase {
         let dest = Path::new(&dest_str);
 
         if source.exists() {
-            std::fs::rename(source, dest).map_err(|e| {
-                EngineError::Port(format!("Failed to undo move: {}", e))
-            })?;
+            std::fs::rename(source, dest)
+                .map_err(|e| EngineError::Port(format!("Failed to undo move: {e}")))?;
         }
 
         self.journal
@@ -133,7 +124,10 @@ mod tests {
             Ok(())
         }
         fn record_batch(&self, operations: &[MoveOperation]) -> Result<(), String> {
-            self.operations.lock().unwrap().extend_from_slice(operations);
+            self.operations
+                .lock()
+                .unwrap()
+                .extend_from_slice(operations);
             Ok(())
         }
         fn get_history(&self, _limit: usize) -> Result<Vec<MoveOperation>, String> {

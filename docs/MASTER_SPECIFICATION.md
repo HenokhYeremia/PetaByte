@@ -1,7 +1,7 @@
 # PetaByte — Master Specification
 
-> **Version:** 1.0
-> **Status:** Draft — Design Phase
+> **Version:** 1.1
+> **Status:** Active — Post-Implementation Audit
 > **Single Source of Truth** for architecture, requirements, and implementation reference.
 
 ---
@@ -430,20 +430,21 @@ petabyte/
 │   ├── main.tsx                    # Entry point
 │   ├── App.tsx                     # Router + layout
 │   ├── types/                      # TypeScript interfaces (mirror Rust DTOs)
-│   ├── stores/                     # Zustand state stores
+│   ├── stores/                     # Zustand state stores (7 stores)
 │   ├── hooks/                      # Custom React hooks (Tauri bridge)
-│   ├── components/                 # Atomic Design UI components
-│   │   ├── ui/                     # Atoms: Button, Card, Progress, Badge, Modal...
+│   ├── mocks/                      # Mock data for UI development
+│   ├── components/                 # Atomic Design UI components (59 total)
+│   │   ├── ui/                     # Button, Card, Skeleton, Spinner
 │   │   ├── layout/                 # AppShell, Sidebar, Header
-│   │   ├── scanner/                # DriveSelector, ScanProgress, ScanHistory
-│   │   ├── file-list/              # FileTable, FileTree, FileCard, LargeFileList
-│   │   ├── duplicates/             # DuplicateGroupCard, DuplicateToolbar
-│   │   ├── cleaner/                # CacheCategoryCard, CleanPreview
-│   │   ├── move/                   # MoveDialog, MovePreview, UndoButton
-│   │   ├── health/                 # HealthGauge, FactorBreakdown, TrendChart
-│   │   ├── settings/               # GeneralSettings, ScanSettings, CleanerSettings
-│   │   └── shared/                 # EmptyState, ErrorState, ConfirmDialog, SearchBar
-│   └── pages/                      # DashboardPage, ScannerPage, DuplicatesPage...
+│   │   ├── shared/                 # ErrorBoundary, LoadingScreen
+│   │   ├── dashboard/              # 10 widgets (HealthScoreCard, StorageOverviewCard, etc.)
+│   │   ├── scanner/                # 9 components (DriveSelector, ScanProgressSection, etc.)
+│   │   ├── duplicates/             # 5 components (DuplicateGroupList, DuplicateDetailsPanel, etc.)
+│   │   ├── cleaner/                # 6 components (CacheSummarySection, CacheCategoryPanel, etc.)
+│   │   ├── move/                   # 6 components (DestinationSelector, MovePreviewSection, etc.)
+│   │   ├── health/                 # 6 components (HealthScoreHero, ScoreBreakdown, etc.)
+│   │   └── settings/               # 8 components (GeneralSettings + 6 section + SettingsPrimitives)
+│   └── pages/                      # 7 pages (DashboardPage, ScannerPage, DuplicatesPage...
 │
 ├── src-tauri/                      # ── Tauri Desktop Shell ──
 │   ├── Cargo.toml                  # Declares petabyte-app as dependency
@@ -483,7 +484,7 @@ petabyte/
 ├────────────────────┼─────────┼─────────┼────────┼──────────┼───────────┼──────┤
 │ scanner            │    ✓    │    ✓    │   ✗    │    ✗     │    ✗     │  ✗   │
 ├────────────────────┼─────────┼─────────┼────────┼──────────┼───────────┼──────┤
-│ database           │    ✓    │    ✓    │   ✗    │    ✗     │    ✗     │  ✗   │
+│ database           │    ✓    │    ✓    │   ✓    │    ✗     │    ✗     │  ✗   │
 ├────────────────────┼─────────┼─────────┼────────┼──────────┼───────────┼──────┤
 │ hasher             │    ✓    │    ✓    │   ✗    │    ✗     │    ✗     │  ✗   │
 ├────────────────────┼─────────┼─────────┼────────┼──────────┼───────────┼──────┤
@@ -1064,6 +1065,79 @@ v3.0 (12 months post-v1.0)
 | Cache rules limited to 6 ecosystems | Emerging ecosystems missed | v1.1 (community contributions) |
 | No machine learning | Weights are static, not personalized | v2.0 |
 | No cloud features | No multi-device sync | v3.0 |
+
+---
+
+## 17. Implementation Deviations
+
+The following sections document permanent design decisions made during implementation that differ from the original specification (v1.0).
+
+### 17.1 Crate Dependency: database → scanner
+
+| Aspect | Spec v1.0 | Actual v1.1 |
+|--------|-----------|-------------|
+| Dependency | `petabyte-database` does NOT depend on `petabyte-scanner` | `petabyte-database` DOES depend on `petabyte-scanner` for `ScanPersistenceService` |
+
+**Rationale:** The `ScanPersistenceService` requires knowledge of scan session types and entry structures defined in the scanner crate. This is an intentional architectural refinement — the database layer owns persistence for all domain entities, including scan-specific ones.
+
+### 17.2 Frontend Component Structure
+
+| Spec Component | Actual Implementation | Change |
+|----------------|----------------------|--------|
+| `file-list/` directory | No separate directory; LargeFileList incorporated into `dashboard/` | Large file analysis is displayed on Dashboard, not a separate page |
+| `cleaner/`: `CacheCategoryCard, CleanPreview` | `CacheCategoryPanel, CacheCleanupPreview, CacheSummarySection, CacheSearchFilter, CacheDetailsTable, CacheActions` | Expanded to 6 specific components for richer UI |
+| `move/`: `MoveDialog, MovePreview, UndoButton` | `DestinationSelector, MovePreviewSection, MoveSummarySection, ConflictResolution, MoveExecutionPanel, UndoCenterPreview` | Replaced dialog pattern with full-page multi-panel layout |
+| `health/`: `HealthGauge, FactorBreakdown, TrendChart` | `HealthScoreHero, ScoreBreakdown, TrendVisualization, RecommendationPanel, PotentialSavings, HealthQuickActions` | Added recommendations, savings, and quick actions |
+| `settings/`: `GeneralSettings, ScanSettings, CleanerSettings` | `GeneralSettings, ScannerSettings, DuplicateSettings, MoveSettings, CacheCleanerSettings, HealthScoreSettings, AppSettings + SettingsPrimitives` | Expanded to 7 tab sections + reusable primitives |
+| `shared/`: `EmptyState, ErrorState, ConfirmDialog, SearchBar` | `ErrorBoundary, LoadingScreen` | Simplified; error/empty states handled inline per component |
+
+### 17.3 Mock Data Strategy
+
+| Spec v1.0 | Actual v1.1 |
+|-----------|-------------|
+| Frontend communicates directly with Tauri `invoke()` for all data | Frontend uses Zustand stores populated with mock data (`src/mocks/`); Tauri hooks exist but are not the primary data source |
+
+**Rationale:** Mock data decouples UI development from backend availability, enabling parallel development and test-driven UI without a running Tauri process. The Tauri hooks (`useScan()`, `useDuplicates()`, `useHealth()`) serve as the bridge layer and are ready for substitution via a single store update. Mock files (`src/mocks/`) will be removed before release.
+
+### 17.4 Component Barrel Exports
+
+| Spec v1.0 | Actual v1.1 |
+|-----------|-------------|
+| All component directories have barrel `index.ts` re-exports | Only `types/`, `health/`, and `settings/` have barrels; all others import via direct file path |
+
+**Rationale:** Barrel exports were added incrementally. Remaining directories can be migrated as needed. No functional impact.
+
+### 17.5 Frontend Test Count
+
+| Spec v1.0 (estimated) | Actual v1.1 |
+|-----------------------|-------------|
+| ~100 tests expected | 329 tests across 14 files |
+
+**Rationale:** The mock-data strategy enabled extensive component-level testing (loading, empty, data, error, and interaction states per component), exceeding initial estimates.
+
+### 17.6 Backend Test Distribution
+
+| Crate | Spec v1.0 (estimated) | Actual v1.1 | Note |
+|-------|----------------------:|------------:|------|
+| petabyte-scanner | — | 24 | |
+| petabyte-database | — | 32 | |
+| petabyte-hasher | — | 29 | |
+| petabyte-duplicate-detector | — | 49 | Most tested crate |
+| petabyte-cache-cleaner | — | 17 | |
+| petabyte-smart-move | 0 (AUDIT) | 20 | Tests exist in source |
+| petabyte-health-score | — | 31 | |
+| petabyte-core-engine | — | 11 | |
+| **Total** | ~150 (estimated) | **213** | |
+
+### 17.7 Dev Dependency: `shellexpand`, `walkdir`, `regex`, `notify`
+
+These external crates were added to the cache-cleaner crate dependencies during implementation:
+- `shellexpand` — for expanding `~` and env vars in cache rule paths
+- `walkdir` — for cache directory traversal outside scan sessions
+- `regex` — for regex-based cache rule matching
+- `notify` — listed in workspace deps but not yet used; reserved for v1.1 file watching
+
+These additions do not violate architectural rules.
 
 ---
 

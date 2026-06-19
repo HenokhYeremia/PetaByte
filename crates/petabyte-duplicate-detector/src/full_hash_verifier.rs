@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fs;
 use std::io::Read;
-use std::sync::atomic::{AtomicBool, Ordering, AtomicU64};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
 use petabyte_shared_models::entities::FileEntry;
@@ -40,18 +40,16 @@ impl FullHashVerifier {
                     return Err(DuplicateError::Cancelled);
                 }
 
-                let full_hash = match hash_cache.lookup(file.file_size, partial_hash) {
-                    Some(cached) => {
+                let full_hash =
+                    if let Some(cached) = hash_cache.lookup(file.file_size, partial_hash) {
                         self.full_hashed.fetch_add(1, Ordering::Relaxed);
                         cached
-                    }
-                    None => {
+                    } else {
                         let hash = compute_full_hash(file.file_path.as_path())?;
                         hash_cache.insert(file.file_size, partial_hash, &hash);
                         self.full_hashed.fetch_add(1, Ordering::Relaxed);
                         hash
-                    }
-                };
+                    };
 
                 Ok((file, full_hash))
             })
@@ -69,6 +67,7 @@ impl FullHashVerifier {
         Ok(verified)
     }
 
+    #[must_use]
     pub fn group_by_full_hash<'a>(
         &self,
         verified: Vec<(&'a FileEntry, String)>,
@@ -120,7 +119,9 @@ mod tests {
             FilePath::new(path).unwrap(),
             None,
             path.rsplit('/').next().unwrap_or(path).into(),
-            path.rsplit('.').next().map(|e| e.to_string()),
+            path.rsplit('.')
+                .next()
+                .map(std::string::ToString::to_string),
             size,
             false,
             false,
@@ -154,7 +155,9 @@ mod tests {
         let f2 = make_entry(&p2, content.len() as u64);
         let refs = vec![&f1, &f2];
 
-        let verified = verifier.verify("partial123", &refs, &cancel, &hash_cache).unwrap();
+        let verified = verifier
+            .verify("partial123", &refs, &cancel, &hash_cache)
+            .unwrap();
         assert_eq!(verified.len(), 2);
         assert_eq!(verified[0].1, verified[1].1);
     }
@@ -173,7 +176,9 @@ mod tests {
         let f2 = make_entry(&p2, 18);
         let refs = vec![&f1, &f2];
 
-        let verified = verifier.verify("partial456", &refs, &cancel, &hash_cache).unwrap();
+        let verified = verifier
+            .verify("partial456", &refs, &cancel, &hash_cache)
+            .unwrap();
         assert_eq!(verified.len(), 2);
         assert_ne!(verified[0].1, verified[1].1);
     }
@@ -225,7 +230,9 @@ mod tests {
         let f = make_entry(&path, content.len() as u64);
         let refs = vec![&f];
 
-        let verified = verifier.verify("partial_large", &refs, &cancel, &hash_cache).unwrap();
+        let verified = verifier
+            .verify("partial_large", &refs, &cancel, &hash_cache)
+            .unwrap();
         assert_eq!(verified.len(), 1);
         assert!(!verified[0].1.is_empty());
     }
@@ -244,7 +251,9 @@ mod tests {
         let f = make_entry(&path, content.len() as u64);
         let refs = vec![&f];
 
-        let verified = verifier.verify("partial_key", &refs, &cancel, &hash_cache).unwrap();
+        let verified = verifier
+            .verify("partial_key", &refs, &cancel, &hash_cache)
+            .unwrap();
         assert_eq!(verified[0].1, "cached_full");
     }
 
@@ -260,7 +269,9 @@ mod tests {
         let f = make_entry(&path, 0);
         let refs = vec![&f];
 
-        let verified = verifier.verify("partial_empty", &refs, &cancel, &hash_cache).unwrap();
+        let verified = verifier
+            .verify("partial_empty", &refs, &cancel, &hash_cache)
+            .unwrap();
         assert_eq!(verified.len(), 1);
         assert!(!verified[0].1.is_empty());
     }

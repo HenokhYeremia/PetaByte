@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use petabyte_database::connection::ConnectionManager;
-use petabyte_health_score::{ScoringEngine, TrendAnalyzer, RecommendationEngine, ScoringConfig};
+use petabyte_health_score::{RecommendationEngine, ScoringConfig, ScoringEngine, TrendAnalyzer};
 use petabyte_shared_models::entities::{HealthMetrics, Recommendation};
 use petabyte_shared_models::ports::HealthScorePort;
 
@@ -33,7 +33,7 @@ impl HealthScorePort for AppHealthCalculator {
                 [],
                 |row| row.get(0),
             )
-            .map_err(|e| format!("Failed to count files: {}", e))?;
+            .map_err(|e| format!("Failed to count files: {e}"))?;
 
         let total_dirs: u64 = db
             .query_row(
@@ -41,7 +41,7 @@ impl HealthScorePort for AppHealthCalculator {
                 [],
                 |row| row.get(0),
             )
-            .map_err(|e| format!("Failed to count dirs: {}", e))?;
+            .map_err(|e| format!("Failed to count dirs: {e}"))?;
 
         let total_size: u64 = db
             .query_row(
@@ -49,7 +49,7 @@ impl HealthScorePort for AppHealthCalculator {
                 [],
                 |row| row.get(0),
             )
-            .map_err(|e| format!("Failed to sum sizes: {}", e))?;
+            .map_err(|e| format!("Failed to sum sizes: {e}"))?;
 
         let duplicate_bytes: u64 = db
             .query_row(
@@ -57,7 +57,7 @@ impl HealthScorePort for AppHealthCalculator {
                 [],
                 |row| row.get(0),
             )
-            .map_err(|e| format!("Failed to sum duplicates: {}", e))?;
+            .map_err(|e| format!("Failed to sum duplicates: {e}"))?;
 
         let temp_file_bytes: u64 = db
             .query_row(
@@ -65,7 +65,7 @@ impl HealthScorePort for AppHealthCalculator {
                 [],
                 |row| row.get(0),
             )
-            .map_err(|e| format!("Failed to sum temps: {}", e))?;
+            .map_err(|e| format!("Failed to sum temps: {e}"))?;
 
         let large_file_bytes: u64 = db
             .query_row(
@@ -73,7 +73,7 @@ impl HealthScorePort for AppHealthCalculator {
                 [],
                 |row| row.get(0),
             )
-            .map_err(|e| format!("Failed to sum large files: {}", e))?;
+            .map_err(|e| format!("Failed to sum large files: {e}"))?;
 
         let free_space_bytes = 0u64;
         let total_capacity_bytes = 0u64;

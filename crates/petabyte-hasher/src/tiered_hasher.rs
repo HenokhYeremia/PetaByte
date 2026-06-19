@@ -15,11 +15,7 @@ pub struct TieredHasher {
 }
 
 impl TieredHasher {
-    pub fn new(
-        partial_max_bytes: u64,
-        chunk_size: usize,
-        cancel: Option<AtomicBool>,
-    ) -> Self {
+    pub fn new(partial_max_bytes: u64, chunk_size: usize, cancel: Option<AtomicBool>) -> Self {
         Self {
             partial_hasher: PartialHasher::new(partial_max_bytes),
             full_hasher: FullHasher::new(chunk_size),
@@ -39,15 +35,10 @@ impl TieredHasher {
     fn is_cancelled(&self) -> bool {
         self.cancel
             .as_ref()
-            .map(|c| c.load(Ordering::Relaxed))
-            .unwrap_or(false)
+            .is_some_and(|c| c.load(Ordering::Relaxed))
     }
 
-    pub fn hash_partial_with_path(
-        &self,
-        path: &Path,
-        file_size: u64,
-    ) -> HashResult<PartialHash> {
+    pub fn hash_partial_with_path(&self, path: &Path, file_size: u64) -> HashResult<PartialHash> {
         if self.is_cancelled() {
             return Err(crate::error::HashError::Cancelled);
         }
@@ -57,19 +48,13 @@ impl TieredHasher {
         }
 
         let cancel_ref = self.cancel.as_ref();
-        let hash = self
-            .partial_hasher
-            .hash(path, cancel_ref)?;
+        let hash = self.partial_hasher.hash(path, cancel_ref)?;
 
         self.cache.set_partial(file_size, path, &hash);
         Ok(hash)
     }
 
-    pub fn hash_full_with_path(
-        &self,
-        path: &Path,
-        file_size: u64,
-    ) -> HashResult<FileHash> {
+    pub fn hash_full_with_path(&self, path: &Path, file_size: u64) -> HashResult<FileHash> {
         if self.is_cancelled() {
             return Err(crate::error::HashError::Cancelled);
         }
@@ -79,9 +64,7 @@ impl TieredHasher {
         }
 
         let cancel_ref = self.cancel.as_ref();
-        let hash = self
-            .full_hasher
-            .hash(path, cancel_ref)?;
+        let hash = self.full_hasher.hash(path, cancel_ref)?;
 
         self.cache.set_full(file_size, path, &hash);
         Ok(hash)
@@ -94,9 +77,7 @@ impl HasherPort for TieredHasher {
             return Err("Hashing cancelled".to_string());
         }
 
-        let file_size = std::fs::metadata(path)
-            .map_err(|e| e.to_string())?
-            .len();
+        let file_size = std::fs::metadata(path).map_err(|e| e.to_string())?.len();
 
         if let Some(cached) = self.cache.get_partial(file_size, path) {
             return Ok(cached);
@@ -117,9 +98,7 @@ impl HasherPort for TieredHasher {
             return Err("Hashing cancelled".to_string());
         }
 
-        let file_size = std::fs::metadata(path)
-            .map_err(|e| e.to_string())?
-            .len();
+        let file_size = std::fs::metadata(path).map_err(|e| e.to_string())?.len();
 
         if let Some(cached) = self.cache.get_full(file_size, path) {
             return Ok(cached);

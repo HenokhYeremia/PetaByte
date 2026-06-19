@@ -1,12 +1,16 @@
-use petabyte_shared_models::entities::{HealthFactor, HealthMetrics, Recommendation, RecommendationPriority};
+use petabyte_shared_models::entities::{
+    HealthFactor, HealthMetrics, Recommendation, RecommendationPriority,
+};
 
 pub struct RecommendationEngine;
 
 impl RecommendationEngine {
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
 
+    #[must_use]
     pub fn generate(&self, metrics: &HealthMetrics) -> Vec<Recommendation> {
         let mut recommendations = Vec::new();
 
@@ -86,24 +90,20 @@ impl RecommendationEngine {
                     action: "Run cache cleaner to remove temporary files".into(),
                 })
             }
-            "large_file_ratio" => {
-                Some(Recommendation {
-                    title: "Large files detected".into(),
-                    description: "A significant portion of storage is consumed by large files.".into(),
-                    priority: RecommendationPriority::Low,
-                    potential_freed_bytes: 0,
-                    action: "Review large files and archive or delete unnecessary ones".into(),
-                })
-            }
-            "fragmentation" => {
-                Some(Recommendation {
-                    title: "File fragmentation detected".into(),
-                    description: "Files are spread across many directories with few files each.".into(),
-                    priority: RecommendationPriority::Low,
-                    potential_freed_bytes: 0,
-                    action: "Consider reorganizing files into fewer directories".into(),
-                })
-            }
+            "large_file_ratio" => Some(Recommendation {
+                title: "Large files detected".into(),
+                description: "A significant portion of storage is consumed by large files.".into(),
+                priority: RecommendationPriority::Low,
+                potential_freed_bytes: 0,
+                action: "Review large files and archive or delete unnecessary ones".into(),
+            }),
+            "fragmentation" => Some(Recommendation {
+                title: "File fragmentation detected".into(),
+                description: "Files are spread across many directories with few files each.".into(),
+                priority: RecommendationPriority::Low,
+                potential_freed_bytes: 0,
+                action: "Consider reorganizing files into fewer directories".into(),
+            }),
             _ => None,
         }
     }

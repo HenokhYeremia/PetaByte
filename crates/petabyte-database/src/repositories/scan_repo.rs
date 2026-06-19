@@ -25,9 +25,9 @@ impl ScanRepository for ScanRepositoryImpl {
                     total_files, total_dirs, total_size, total_errors)
                    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)";
         let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-            params.iter().map(|p| p.as_ref()).collect();
+            params.iter().map(std::convert::AsRef::as_ref).collect();
         conn.execute(sql, params_refs.as_slice())
-            .map_err(|e| format!("Failed to create session: {}", e))?;
+            .map_err(|e| format!("Failed to create session: {e}"))?;
         Ok(())
     }
 
@@ -40,9 +40,9 @@ impl ScanRepository for ScanRepositoryImpl {
                        total_size = ?5, total_errors = ?6
                    WHERE session_id = ?7";
         let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-            params.iter().map(|p| p.as_ref()).collect();
+            params.iter().map(std::convert::AsRef::as_ref).collect();
         conn.execute(sql, params_refs.as_slice())
-            .map_err(|e| format!("Failed to update session: {}", e))?;
+            .map_err(|e| format!("Failed to update session: {e}"))?;
         Ok(())
     }
 
@@ -50,14 +50,14 @@ impl ScanRepository for ScanRepositoryImpl {
         let conn = self.conn.connection();
         let mut stmt = conn
             .prepare("SELECT * FROM scan_sessions WHERE session_id = ?1")
-            .map_err(|e| format!("Failed to prepare: {}", e))?;
+            .map_err(|e| format!("Failed to prepare: {e}"))?;
         let mut rows = stmt
             .query([session_id])
-            .map_err(|e| format!("Failed to query: {}", e))?;
-        match rows.next().map_err(|e| format!("Failed to fetch: {}", e))? {
+            .map_err(|e| format!("Failed to query: {e}"))?;
+        match rows.next().map_err(|e| format!("Failed to fetch: {e}"))? {
             Some(row) => {
-                let session = ScanSessionRow::from_row(&row)
-                    .map_err(|e| format!("Failed to parse row: {}", e))?;
+                let session = ScanSessionRow::from_row(row)
+                    .map_err(|e| format!("Failed to parse row: {e}"))?;
                 Ok(Some(session))
             }
             None => Ok(None),
@@ -73,14 +73,14 @@ impl ScanRepository for ScanRepositoryImpl {
                    AND status IN ('Scanning', 'Paused')
                  ORDER BY started_at DESC LIMIT 1",
             )
-            .map_err(|e| format!("Failed to prepare: {}", e))?;
+            .map_err(|e| format!("Failed to prepare: {e}"))?;
         let mut rows = stmt
             .query([root_path])
-            .map_err(|e| format!("Failed to query: {}", e))?;
-        match rows.next().map_err(|e| format!("Failed to fetch: {}", e))? {
+            .map_err(|e| format!("Failed to query: {e}"))?;
+        match rows.next().map_err(|e| format!("Failed to fetch: {e}"))? {
             Some(row) => {
-                let session = ScanSessionRow::from_row(&row)
-                    .map_err(|e| format!("Failed to parse row: {}", e))?;
+                let session = ScanSessionRow::from_row(row)
+                    .map_err(|e| format!("Failed to parse row: {e}"))?;
                 Ok(Some(session))
             }
             None => Ok(None),
@@ -91,16 +91,16 @@ impl ScanRepository for ScanRepositoryImpl {
         let conn = self.conn.connection();
         let mut stmt = conn
             .prepare("SELECT * FROM scan_sessions ORDER BY started_at DESC")
-            .map_err(|e| format!("Failed to prepare: {}", e))?;
+            .map_err(|e| format!("Failed to prepare: {e}"))?;
         let mut rows = stmt
             .query([])
-            .map_err(|e| format!("Failed to query: {}", e))?;
+            .map_err(|e| format!("Failed to query: {e}"))?;
         let mut sessions = Vec::new();
         loop {
-            match rows.next().map_err(|e| format!("Failed to fetch: {}", e))? {
+            match rows.next().map_err(|e| format!("Failed to fetch: {e}"))? {
                 Some(row) => {
-                    let session = ScanSessionRow::from_row(&row)
-                        .map_err(|e| format!("Failed to parse row: {}", e))?;
+                    let session = ScanSessionRow::from_row(row)
+                        .map_err(|e| format!("Failed to parse row: {e}"))?;
                     sessions.push(session);
                 }
                 None => break,
@@ -112,9 +112,12 @@ impl ScanRepository for ScanRepositoryImpl {
     fn delete_session(&self, session_id: &str) -> Result<(), String> {
         let conn = self.conn.connection();
         conn.execute("DELETE FROM scan_files WHERE session_id = ?1", [session_id])
-            .map_err(|e| format!("Failed to delete files: {}", e))?;
-        conn.execute("DELETE FROM scan_sessions WHERE session_id = ?1", [session_id])
-            .map_err(|e| format!("Failed to delete session: {}", e))?;
+            .map_err(|e| format!("Failed to delete files: {e}"))?;
+        conn.execute(
+            "DELETE FROM scan_sessions WHERE session_id = ?1",
+            [session_id],
+        )
+        .map_err(|e| format!("Failed to delete session: {e}"))?;
         Ok(())
     }
 }

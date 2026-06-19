@@ -1,11 +1,11 @@
-pub mod rule_engine;
-pub mod size_calculator;
-pub mod safe_remover;
-pub mod rules;
 pub mod error;
+pub mod rule_engine;
+pub mod rules;
+pub mod safe_remover;
+pub mod size_calculator;
 
-pub use rule_engine::RuleEngine;
-pub use size_calculator::{SizeCalculator, SizeInfo};
-pub use safe_remover::{SafeRemover, RemovalStats};
 pub use error::{CleanerError, CleanerResult};
+pub use rule_engine::RuleEngine;
 pub use rules::builtin::CacheRule;
+pub use safe_remover::{RemovalStats, SafeRemover};
+pub use size_calculator::{SizeCalculator, SizeInfo};

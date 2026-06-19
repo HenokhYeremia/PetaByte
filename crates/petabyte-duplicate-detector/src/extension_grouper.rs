@@ -4,11 +4,19 @@ use petabyte_shared_models::entities::FileEntry;
 
 pub struct ExtensionGrouper;
 
+impl Default for ExtensionGrouper {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ExtensionGrouper {
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
 
+    #[must_use]
     pub fn group_by_extension<'a>(
         &self,
         files: &[&'a FileEntry],
@@ -20,8 +28,10 @@ impl ExtensionGrouper {
             groups.entry(ext).or_default().push(file);
         }
 
-        let mut result: Vec<(Option<String>, Vec<&'a FileEntry>)> =
-            groups.into_iter().filter(|(_, files)| files.len() > 1).collect();
+        let mut result: Vec<(Option<String>, Vec<&'a FileEntry>)> = groups
+            .into_iter()
+            .filter(|(_, files)| files.len() > 1)
+            .collect();
 
         result.sort_by(|a, b| a.0.cmp(&b.0));
         result
@@ -35,7 +45,11 @@ mod tests {
 
     fn make_file(path: &str, size: u64) -> FileEntry {
         let parts: Vec<&str> = path.rsplitn(2, '.').collect();
-        let ext = if parts.len() == 2 { Some(parts[0].to_string()) } else { None };
+        let ext = if parts.len() == 2 {
+            Some(parts[0].to_string())
+        } else {
+            None
+        };
         FileEntry::new(
             FilePath::new(path).unwrap(),
             None,
@@ -60,7 +74,7 @@ mod tests {
     #[test]
     fn test_all_same_extension() {
         let grouper = ExtensionGrouper::new();
-        let files = vec![
+        let files = [
             make_file("/a.txt", 100),
             make_file("/b.txt", 100),
             make_file("/c.txt", 100),
@@ -75,7 +89,7 @@ mod tests {
     #[test]
     fn test_multiple_extensions() {
         let grouper = ExtensionGrouper::new();
-        let files = vec![
+        let files = [
             make_file("/a.txt", 100),
             make_file("/b.txt", 100),
             make_file("/c.jpg", 100),
@@ -92,10 +106,7 @@ mod tests {
     #[test]
     fn test_no_extension() {
         let grouper = ExtensionGrouper::new();
-        let files = vec![
-            make_file("/a", 100),
-            make_file("/b", 100),
-        ];
+        let files = [make_file("/a", 100), make_file("/b", 100)];
         let refs: Vec<&FileEntry> = files.iter().collect();
         let result = grouper.group_by_extension(&refs);
         assert_eq!(result.len(), 1);
@@ -105,10 +116,7 @@ mod tests {
     #[test]
     fn test_single_file_per_extension_skipped() {
         let grouper = ExtensionGrouper::new();
-        let files = vec![
-            make_file("/a.txt", 100),
-            make_file("/b.jpg", 100),
-        ];
+        let files = [make_file("/a.txt", 100), make_file("/b.jpg", 100)];
         let refs: Vec<&FileEntry> = files.iter().collect();
         let result = grouper.group_by_extension(&refs);
         assert!(result.is_empty());
@@ -117,10 +125,7 @@ mod tests {
     #[test]
     fn test_case_insensitive_grouping() {
         let grouper = ExtensionGrouper::new();
-        let files = vec![
-            make_file("/a.TXT", 100),
-            make_file("/b.txt", 100),
-        ];
+        let files = [make_file("/a.TXT", 100), make_file("/b.txt", 100)];
         let refs: Vec<&FileEntry> = files.iter().collect();
         let result = grouper.group_by_extension(&refs);
         assert_eq!(result.len(), 1);

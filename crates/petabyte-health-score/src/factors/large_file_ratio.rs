@@ -1,5 +1,6 @@
 use crate::config::ScoringConfig;
 
+#[must_use]
 pub fn calculate_large_file_ratio_score(
     large_file_bytes: u64,
     total_bytes: u64,

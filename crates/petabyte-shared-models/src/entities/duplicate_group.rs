@@ -12,6 +12,7 @@ pub struct DuplicateGroup {
 }
 
 impl DuplicateGroup {
+    #[must_use]
     pub fn wasted_bytes(&self) -> u64 {
         self.file_size * (self.file_count - 1)
     }

@@ -15,6 +15,7 @@ pub struct SafeRemover {
 }
 
 impl SafeRemover {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             use_trash: true,
@@ -22,11 +23,13 @@ impl SafeRemover {
         }
     }
 
+    #[must_use]
     pub fn with_trash(mut self, use_trash: bool) -> Self {
         self.use_trash = use_trash;
         self
     }
 
+    #[must_use]
     pub fn with_dry_run(mut self, dry_run: bool) -> Self {
         self.dry_run = dry_run;
         self
@@ -49,7 +52,7 @@ impl SafeRemover {
                 .follow_links(false)
                 .contents_first(true)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
             {
                 if entry.path() == path {
                     continue;
@@ -107,16 +110,13 @@ impl SafeRemover {
 
     fn remove_single(&self, path: &Path) -> CleanerResult<()> {
         if self.use_trash {
-            trash::delete(path)
-                .map_err(|e| CleanerError::Trash(format!("Failed to trash {}: {}", path.display(), e)))
+            trash::delete(path).map_err(|e| {
+                CleanerError::Trash(format!("Failed to trash {}: {}", path.display(), e))
+            })
+        } else if path.is_dir() {
+            std::fs::remove_dir_all(path).map_err(CleanerError::Io)
         } else {
-            if path.is_dir() {
-                std::fs::remove_dir_all(path)
-                    .map_err(CleanerError::Io)
-            } else {
-                std::fs::remove_file(path)
-                    .map_err(CleanerError::Io)
-            }
+            std::fs::remove_file(path).map_err(CleanerError::Io)
         }
     }
 }
@@ -171,7 +171,9 @@ mod tests {
     #[test]
     fn test_remove_nonexistent_path() {
         let remover = SafeRemover::new();
-        let stats = remover.remove(Path::new("C:\\nonexistent_xyz_test")).unwrap();
+        let stats = remover
+            .remove(Path::new("C:\\nonexistent_xyz_test"))
+            .unwrap();
         assert_eq!(stats.files_removed, 0);
         assert!(stats.errors.is_empty());
     }

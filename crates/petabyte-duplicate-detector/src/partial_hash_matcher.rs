@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fs;
 use std::io::Read;
-use std::sync::atomic::{AtomicBool, Ordering, AtomicU64};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
 use petabyte_shared_models::entities::FileEntry;
@@ -46,16 +46,13 @@ impl PartialHashMatcher {
 
                 let path = file.file_path.as_path();
 
-                let partial = match hash_cache.lookup(file.file_size, "") {
-                    Some(full_hash) => {
-                        self.partial_hashed.fetch_add(1, Ordering::Relaxed);
-                        full_hash
-                    }
-                    None => {
-                        let hash = compute_partial_hash(path, partial_hash_size)?;
-                        self.partial_hashed.fetch_add(1, Ordering::Relaxed);
-                        hash
-                    }
+                let partial = if let Some(full_hash) = hash_cache.lookup(file.file_size, "") {
+                    self.partial_hashed.fetch_add(1, Ordering::Relaxed);
+                    full_hash
+                } else {
+                    let hash = compute_partial_hash(path, partial_hash_size)?;
+                    self.partial_hashed.fetch_add(1, Ordering::Relaxed);
+                    hash
                 };
 
                 Ok((file, partial))
@@ -76,6 +73,7 @@ impl PartialHashMatcher {
         Ok(hashed)
     }
 
+    #[must_use]
     pub fn group_by_partial_hash<'a>(
         &self,
         hashed: Vec<(&'a FileEntry, String)>,
@@ -116,7 +114,9 @@ mod tests {
             FilePath::new(path).unwrap(),
             None,
             path.rsplit('/').next().unwrap_or(path).into(),
-            path.rsplit('.').next().map(|e| e.to_string()),
+            path.rsplit('.')
+                .next()
+                .map(std::string::ToString::to_string),
             size,
             false,
             false,
@@ -147,9 +147,14 @@ mod tests {
         let matcher = PartialHashMatcher::new(&config, counter.clone());
         let hash_cache = HashCache::new();
 
-        let files = vec![make_entry(&p1, content.len() as u64), make_entry(&p2, content.len() as u64)];
+        let files = [
+            make_entry(&p1, content.len() as u64),
+            make_entry(&p2, content.len() as u64),
+        ];
         let refs: Vec<&FileEntry> = files.iter().collect();
-        let hashed = matcher.compute_partial_hashes(&refs, &cancel, &hash_cache).unwrap();
+        let hashed = matcher
+            .compute_partial_hashes(&refs, &cancel, &hash_cache)
+            .unwrap();
         assert_eq!(hashed.len(), 2);
         assert_eq!(hashed[0].1, hashed[1].1);
     }
@@ -165,12 +170,11 @@ mod tests {
         let matcher = PartialHashMatcher::new(&config, counter.clone());
         let hash_cache = HashCache::new();
 
-        let files = vec![
-            make_entry(&p1, 9),
-            make_entry(&p2, 9),
-        ];
+        let files = [make_entry(&p1, 9), make_entry(&p2, 9)];
         let refs: Vec<&FileEntry> = files.iter().collect();
-        let hashed = matcher.compute_partial_hashes(&refs, &cancel, &hash_cache).unwrap();
+        let hashed = matcher
+            .compute_partial_hashes(&refs, &cancel, &hash_cache)
+            .unwrap();
         assert_eq!(hashed.len(), 2);
         assert_ne!(hashed[0].1, hashed[1].1);
     }
@@ -223,9 +227,11 @@ mod tests {
         let matcher = PartialHashMatcher::new(&config, counter.clone());
         let hash_cache = HashCache::new();
 
-        let files = vec![make_entry(&path, content.len() as u64)];
+        let files = [make_entry(&path, content.len() as u64)];
         let refs: Vec<&FileEntry> = files.iter().collect();
-        let hashed = matcher.compute_partial_hashes(&refs, &cancel, &hash_cache).unwrap();
+        let hashed = matcher
+            .compute_partial_hashes(&refs, &cancel, &hash_cache)
+            .unwrap();
         assert_eq!(hashed.len(), 1);
         assert!(!hashed[0].1.is_empty());
     }
@@ -243,9 +249,11 @@ mod tests {
         let hash_cache = HashCache::new();
         hash_cache.insert(content.len() as u64, "", "cached_full_hash");
 
-        let files = vec![make_entry(&path, content.len() as u64)];
+        let files = [make_entry(&path, content.len() as u64)];
         let refs: Vec<&FileEntry> = files.iter().collect();
-        let hashed = matcher.compute_partial_hashes(&refs, &cancel, &hash_cache).unwrap();
+        let hashed = matcher
+            .compute_partial_hashes(&refs, &cancel, &hash_cache)
+            .unwrap();
         assert_eq!(hashed[0].1, "cached_full_hash");
     }
 }

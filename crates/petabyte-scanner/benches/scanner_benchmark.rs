@@ -7,11 +7,11 @@ fn main() {
 
     // Create 1000 files across 10 directories
     for i in 0..10 {
-        let sub = dir.path().join(format!("dir_{}", i));
+        let sub = dir.path().join(format!("dir_{i}"));
         std::fs::create_dir_all(&sub).unwrap();
         for j in 0..100 {
             let content = format!("content_{}_{} {}", i, j, "x".repeat(100));
-            std::fs::write(sub.join(format!("file_{}.txt", j)), &content).unwrap();
+            std::fs::write(sub.join(format!("file_{j}.txt")), &content).unwrap();
         }
     }
 
@@ -40,10 +40,17 @@ fn main() {
     println!("=== Scanner Benchmark ===");
     println!("Files:     {}", result.total_files);
     println!("Dirs:      {}", result.total_dirs);
-    println!("Total entries: {}", total);
-    println!("Elapsed:   {:?}", elapsed);
-    println!("Rate:      {:.0} files/sec", result.total_files as f64 / elapsed.as_secs_f64());
-    println!("Total size: {} bytes ({} MB)", result.total_size, result.total_size / 1_000_000);
+    println!("Total entries: {total}");
+    println!("Elapsed:   {elapsed:?}");
+    println!(
+        "Rate:      {:.0} files/sec",
+        result.total_files as f64 / elapsed.as_secs_f64()
+    );
+    println!(
+        "Total size: {} bytes ({} MB)",
+        result.total_size,
+        result.total_size / 1_000_000
+    );
 
     // Assert reasonable performance
     assert!(result.total_files == 1000, "Should find 1000 files");

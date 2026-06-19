@@ -1,5 +1,6 @@
 use crate::config::ScoringConfig;
 
+#[must_use]
 pub fn calculate_free_space_score(
     free_space_bytes: u64,
     total_capacity_bytes: u64,

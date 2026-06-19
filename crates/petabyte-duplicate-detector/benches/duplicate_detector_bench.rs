@@ -10,7 +10,9 @@ fn make_entry(path: &str, size: u64) -> FileEntry {
         FilePath::new(path).unwrap(),
         None,
         path.rsplit('/').next().unwrap_or(path).into(),
-        path.rsplit('.').next().map(|e| e.to_string()),
+        path.rsplit('.')
+            .next()
+            .map(std::string::ToString::to_string),
         size,
         false,
         false,
@@ -28,7 +30,7 @@ fn create_temp_files(
 ) -> Vec<String> {
     let mut paths = Vec::with_capacity(count);
     for i in 0..count {
-        let path = dir.path().join(format!("{}_{}.dat", prefix, i));
+        let path = dir.path().join(format!("{prefix}_{i}.dat"));
         let mut f = std::fs::File::create(&path).unwrap();
         f.write_all(content).unwrap();
         paths.push(path.to_string_lossy().to_string());
@@ -44,8 +46,8 @@ fn bench_no_duplicates(c: &mut Criterion) {
     let dir = tempfile::TempDir::new().unwrap();
     let mut files = Vec::new();
     for i in 0..100 {
-        let content = format!("unique content file number {}", i);
-        let path = dir.path().join(format!("file_{}.dat", i));
+        let content = format!("unique content file number {i}");
+        let path = dir.path().join(format!("file_{i}.dat"));
         std::fs::write(&path, &content).unwrap();
         files.push(make_entry(&path.to_string_lossy(), content.len() as u64));
     }
@@ -57,7 +59,7 @@ fn bench_no_duplicates(c: &mut Criterion) {
                     .detect(black_box(&files), black_box(&cancel))
                     .unwrap(),
             )
-        })
+        });
     });
 }
 
@@ -91,7 +93,7 @@ fn bench_with_duplicates(c: &mut Criterion) {
                     .detect(black_box(&files), black_box(&cancel))
                     .unwrap(),
             )
-        })
+        });
     });
 }
 
@@ -116,7 +118,7 @@ fn bench_large_group(c: &mut Criterion) {
                     .detect(black_box(&files), black_box(&cancel))
                     .unwrap(),
             )
-        })
+        });
     });
 }
 

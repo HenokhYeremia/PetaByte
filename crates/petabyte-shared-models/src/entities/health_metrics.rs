@@ -37,6 +37,7 @@ pub struct Recommendation {
 }
 
 impl HealthFactor {
+    #[must_use]
     pub fn new(name: &str, score: f64, weight: f64, description: &str) -> Self {
         Self {
             name: name.to_string(),

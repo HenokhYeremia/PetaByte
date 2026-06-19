@@ -7,14 +7,13 @@ pub struct SizeGrouper {
 }
 
 impl SizeGrouper {
+    #[must_use]
     pub fn new(min_group_size: usize) -> Self {
         Self { min_group_size }
     }
 
-    pub fn group_by_size<'a>(
-        &self,
-        files: &'a [FileEntry],
-    ) -> Vec<(u64, Vec<&'a FileEntry>)> {
+    #[must_use]
+    pub fn group_by_size<'a>(&self, files: &'a [FileEntry]) -> Vec<(u64, Vec<&'a FileEntry>)> {
         let mut groups: HashMap<u64, Vec<&'a FileEntry>> = HashMap::new();
 
         for file in files {
@@ -29,10 +28,11 @@ impl SizeGrouper {
             .filter(|(_, files)| files.len() >= self.min_group_size)
             .collect();
 
-        result.sort_by(|a, b| a.0.cmp(&b.0));
+        result.sort_by_key(|a| a.0);
         result
     }
 
+    #[must_use]
     pub fn candidate_count(&self, files: &[FileEntry]) -> usize {
         let mut groups: HashMap<u64, usize> = HashMap::new();
         for file in files {
@@ -59,7 +59,9 @@ mod tests {
             FilePath::new(path).unwrap(),
             None,
             path.rsplit('/').next().unwrap_or(path).into(),
-            path.rsplit('.').next().map(|e| e.to_string()),
+            path.rsplit('.')
+                .next()
+                .map(std::string::ToString::to_string),
             size,
             false,
             false,

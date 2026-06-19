@@ -1,18 +1,22 @@
 use std::sync::{Arc, Mutex};
 
-use petabyte_core_engine::use_cases::*;
+use petabyte_core_engine::use_cases::{
+    CalculateHealthUseCase, CleanCacheUseCase, FindDuplicatesUseCase, FindLargeFilesUseCase,
+    ScanDriveUseCase, SmartMoveUseCase,
+};
 use petabyte_database::connection::ConnectionManager;
 use petabyte_database::repositories::{FileRepositoryImpl, ScanRepositoryImpl};
-use petabyte_shared_models::ports::*;
+use petabyte_shared_models::ports::{
+    CacheCleanerPort, DuplicateDetector, FileOpPort, FileRepository, HealthScorePort,
+    MoveJournalPort, ProgressEmitter, ScanRepository,
+};
 
 use crate::adapters::{AppCacheCleaner, AppHealthCalculator, AppProgressEmitter};
 use crate::state::AppState;
 
 pub fn build_app_state(app_handle: tauri::AppHandle) -> AppState {
     let db_path = petabyte_shared::platform::default_app_data_dir() + "/petabyte.db";
-    let conn = Arc::new(
-        ConnectionManager::open(&db_path).expect("Failed to open database"),
-    );
+    let conn = Arc::new(ConnectionManager::open(&db_path).expect("Failed to open database"));
     petabyte_database::migrations::run_all(&conn).expect("Failed to run migrations");
 
     let file_repo = Arc::new(FileRepositoryImpl::new(conn.clone())) as Arc<dyn FileRepository>;
@@ -33,8 +37,8 @@ pub fn build_app_state(app_handle: tauri::AppHandle) -> AppState {
         .with_partial_hash_size(8192)
         .with_extension_grouping(true)
         .with_max_concurrent_hashes(4);
-    let detector =
-        Arc::new(petabyte_duplicate_detector::Detector::new(dup_config)) as Arc<dyn DuplicateDetector>;
+    let detector = Arc::new(petabyte_duplicate_detector::Detector::new(dup_config))
+        as Arc<dyn DuplicateDetector>;
 
     let scoring_config = petabyte_health_score::ScoringConfig::default();
     let health_calc = Arc::new(AppHealthCalculator::new(scoring_config, conn.clone()))

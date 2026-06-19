@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 
 use petabyte_shared_models::ports::ProgressEmitter;
 
@@ -51,7 +51,7 @@ impl ProgressSynchronizer {
 
         self.session_manager
             .checkpoint(files, dirs, bytes, errors)
-            .map_err(|e| DatabaseError::Session(e))?;
+            .map_err(DatabaseError::Session)?;
 
         self.last_sync_files
             .store(self.batch_writer.entries_received(), Ordering::Relaxed);
@@ -76,7 +76,7 @@ impl ProgressSynchronizer {
         if let Some(ref emitter) = self.emitter {
             emitter.on_error(message);
         }
-        log::error!("Scan error: {}", message);
+        log::error!("Scan error: {message}");
     }
 }
 
@@ -106,8 +106,7 @@ mod tests {
     fn setup() -> (Arc<BatchWriter>, ProgressSynchronizer, Arc<TestEmitter>) {
         let conn = Arc::new(ConnectionManager::open_in_memory().unwrap());
         migrations::run_all(&conn).unwrap();
-        let repo: Arc<dyn ScanRepository> =
-            Arc::new(ScanRepositoryImpl::new(conn.clone()));
+        let repo: Arc<dyn ScanRepository> = Arc::new(ScanRepositoryImpl::new(conn.clone()));
         let session = ScanSession::new("/test");
         repo.create_session(&session).unwrap();
         let sid = session.session_id.clone();
@@ -153,9 +152,9 @@ mod tests {
         let (bw, ps, emitter) = setup();
         for i in 0..10 {
             let entry = petabyte_shared_models::entities::FileEntry::new(
-                FilePath::new(format!("/a/{}.txt", i)).unwrap(),
+                FilePath::new(format!("/a/{i}.txt")).unwrap(),
                 None,
-                format!("{}.txt", i),
+                format!("{i}.txt"),
                 Some("txt".into()),
                 100,
                 false,

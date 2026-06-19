@@ -1,7 +1,7 @@
-use std::path::{Path, PathBuf};
-use petabyte_cache_cleaner::{RuleEngine, SizeCalculator, SafeRemover};
+use petabyte_cache_cleaner::{RuleEngine, SafeRemover, SizeCalculator};
 use petabyte_shared_models::entities::{CacheCleanResult, CacheEntry};
 use petabyte_shared_models::ports::CacheCleanerPort;
+use std::path::{Path, PathBuf};
 
 pub struct AppCacheCleaner {
     engine: RuleEngine,
@@ -10,6 +10,7 @@ pub struct AppCacheCleaner {
 }
 
 impl AppCacheCleaner {
+    #[must_use]
     pub fn new(engine: RuleEngine, use_trash: bool) -> Self {
         Self {
             engine,
@@ -25,7 +26,11 @@ impl AppCacheCleaner {
         }
         if path_str.starts_with("~/") || path_str == "~" {
             if let Some(home) = dirs_next_home() {
-                let rest = if path_str.len() > 2 { &path_str[2..] } else { "" };
+                let rest = if path_str.len() > 2 {
+                    &path_str[2..]
+                } else {
+                    ""
+                };
                 let mut buf = home;
                 if !rest.is_empty() {
                     buf.push(rest);
@@ -33,7 +38,7 @@ impl AppCacheCleaner {
                 return buf;
             }
         }
-        if path_str.contains("$") {
+        if path_str.contains('$') {
             let expanded = expand_env_vars(path_str);
             return PathBuf::from(expanded);
         }

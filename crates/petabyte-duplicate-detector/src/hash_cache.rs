@@ -13,7 +13,14 @@ struct CachedHash {
     file_count: u64,
 }
 
+impl Default for HashCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HashCache {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             cache: RwLock::new(HashMap::new()),

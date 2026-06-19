@@ -4,6 +4,7 @@ use std::path::Path;
 pub struct DryRunMover;
 
 impl DryRunMover {
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

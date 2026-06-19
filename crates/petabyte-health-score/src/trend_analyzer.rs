@@ -3,11 +3,13 @@ use petabyte_shared_models::entities::HealthMetrics;
 pub struct TrendAnalyzer;
 
 impl TrendAnalyzer {
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
 
     /// Compare two metrics snapshots and return a human-readable summary.
+    #[must_use]
     pub fn compare(&self, previous: &HealthMetrics, current: &HealthMetrics) -> String {
         let diff = current.overall_score - previous.overall_score;
         let direction = if diff > 0.0 {
@@ -37,10 +39,7 @@ impl TrendAnalyzer {
         }
 
         if details.is_empty() {
-            format!(
-                "Overall health {} (change: {:.1}%, no significant factor changes)",
-                direction, pct
-            )
+            format!("Overall health {direction} (change: {pct:.1}%, no significant factor changes)")
         } else {
             format!(
                 "Overall health {} ({:.1}%):\n{}",

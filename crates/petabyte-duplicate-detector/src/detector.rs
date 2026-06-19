@@ -31,6 +31,7 @@ pub struct Detector {
 }
 
 impl Detector {
+    #[must_use]
     pub fn new(config: DuplicateDetectionConfig) -> Self {
         let partial_hashed = Arc::new(AtomicU64::new(0));
         let full_hashed = Arc::new(AtomicU64::new(0));
@@ -64,7 +65,8 @@ impl Detector {
         self.emit_progress(None, "idle");
 
         let candidates = self.size_grouper.candidate_count(files);
-        self.total_candidates.store(candidates as u64, Ordering::Relaxed);
+        self.total_candidates
+            .store(candidates as u64, Ordering::Relaxed);
         *self.start_time.lock() = Some(Instant::now());
 
         let size_groups = self.size_grouper.group_by_size(files);
@@ -105,7 +107,8 @@ impl Detector {
                 .collect();
 
             all_groups.extend(chunk_groups);
-            self.groups_found.store(all_groups.len() as u64, Ordering::Relaxed);
+            self.groups_found
+                .store(all_groups.len() as u64, Ordering::Relaxed);
         }
 
         Ok(self.build_result_from(all_groups))
@@ -138,9 +141,11 @@ impl Detector {
                 continue;
             }
 
-            let hashed = self
-                .partial_hash_matcher
-                .compute_partial_hashes(ext_group, cancel, &self.hash_cache)?;
+            let hashed = self.partial_hash_matcher.compute_partial_hashes(
+                ext_group,
+                cancel,
+                &self.hash_cache,
+            )?;
 
             let partial_groups = self.partial_hash_matcher.group_by_partial_hash(hashed);
 
@@ -159,10 +164,12 @@ impl Detector {
                 let full_hash_groups = self.full_hash_verifier.group_by_full_hash(verified);
 
                 for (full_hash, full_group) in &full_hash_groups {
-                    let partial_key = format!("{}_{}", size, partial_hash);
-                    let full_key = format!("{}_{}", size, full_hash);
+                    let partial_key = format!("{size}_{partial_hash}");
+                    let full_key = format!("{size}_{full_hash}");
 
-                    let groups = self.reporter.build_groups(vec![(&full_key, full_group.to_vec())]);
+                    let groups = self
+                        .reporter
+                        .build_groups(vec![(&full_key, full_group.clone())]);
                     let groups_with_partial: Vec<DuplicateGroup> = groups
                         .into_iter()
                         .map(|mut g| {
@@ -199,9 +206,7 @@ impl Detector {
 
     fn current_progress(&self) -> DuplicateProgress {
         let start = self.start_time.lock();
-        let elapsed = start
-            .map(|s| s.elapsed().as_secs())
-            .unwrap_or(0);
+        let elapsed = start.map(|s| s.elapsed().as_secs()).unwrap_or(0);
         let (hits, misses) = self.hash_cache.stats();
 
         DuplicateProgress {
@@ -237,11 +242,7 @@ impl Detector {
 }
 
 impl petabyte_shared_models::ports::DuplicateDetector for Detector {
-    fn detect(
-        &self,
-        files: &[FileEntry],
-        cancel: &AtomicBool,
-    ) -> Result<DuplicateResult, String> {
+    fn detect(&self, files: &[FileEntry], cancel: &AtomicBool) -> Result<DuplicateResult, String> {
         self.detect(files, cancel)
     }
 
@@ -251,11 +252,12 @@ impl petabyte_shared_models::ports::DuplicateDetector for Detector {
         cancel: &AtomicBool,
         emitter: Option<Arc<dyn ProgressEmitter>>,
     ) -> Result<DuplicateResult, String> {
-        let emitter_ref = emitter.as_ref().map(|e| e.as_ref());
+        let emitter_ref = emitter.as_ref().map(std::convert::AsRef::as_ref);
         self.emit_progress(emitter_ref, "idle");
 
         let candidates = self.size_grouper.candidate_count(files);
-        self.total_candidates.store(candidates as u64, Ordering::Relaxed);
+        self.total_candidates
+            .store(candidates as u64, Ordering::Relaxed);
         *self.start_time.lock() = Some(Instant::now());
 
         let size_groups = self.size_grouper.group_by_size(files);
@@ -304,7 +306,8 @@ impl Detector {
                 .collect();
 
             all_groups.extend(chunk_groups);
-            self.groups_found.store(all_groups.len() as u64, Ordering::Relaxed);
+            self.groups_found
+                .store(all_groups.len() as u64, Ordering::Relaxed);
             self.emit_progress(emitter, "processing");
         }
 
@@ -324,7 +327,9 @@ mod tests {
             FilePath::new(path).unwrap(),
             None,
             path.rsplit('/').next().unwrap_or(path).into(),
-            path.rsplit('.').next().map(|e| e.to_string()),
+            path.rsplit('.')
+                .next()
+                .map(std::string::ToString::to_string),
             size,
             false,
             false,
@@ -346,7 +351,7 @@ mod tests {
     fn create_temp_files(count: usize, content: &[u8], dir: &tempfile::TempDir) -> Vec<String> {
         let mut paths = Vec::with_capacity(count);
         for i in 0..count {
-            let path = dir.path().join(format!("test_{}.dat", i));
+            let path = dir.path().join(format!("test_{i}.dat"));
             let mut f = std::fs::File::create(&path).unwrap();
             f.write_all(content).unwrap();
             paths.push(path.to_string_lossy().to_string());
@@ -362,10 +367,7 @@ mod tests {
 
         let (_d1, p1) = create_temp_file(b"unique content a");
         let (_d2, p2) = create_temp_file(b"unique content b");
-        let files = vec![
-            make_entry(&p1, 16),
-            make_entry(&p2, 17),
-        ];
+        let files = vec![make_entry(&p1, 16), make_entry(&p2, 17)];
 
         let result = detector.detect(&files, &cancel).unwrap();
         assert!(result.groups.is_empty());
@@ -447,13 +449,13 @@ mod tests {
         let mut files: Vec<FileEntry> = Vec::new();
 
         for i in 0..2 {
-            let path = dir.path().join(format!("a_{}.dat", i));
+            let path = dir.path().join(format!("a_{i}.dat"));
             std::fs::write(&path, content_a).unwrap();
             files.push(make_entry(&path.to_string_lossy(), content_a.len() as u64));
         }
 
         for i in 0..3 {
-            let path = dir.path().join(format!("b_{}.dat", i));
+            let path = dir.path().join(format!("b_{i}.dat"));
             std::fs::write(&path, content_b).unwrap();
             files.push(make_entry(&path.to_string_lossy(), content_b.len() as u64));
         }
@@ -485,8 +487,7 @@ mod tests {
 
     #[test]
     fn test_extension_grouping_filters_different_ext() {
-        let config = DuplicateDetectionConfig::default()
-            .with_extension_grouping(true);
+        let config = DuplicateDetectionConfig::default().with_extension_grouping(true);
         let detector = Detector::new(config);
         let cancel = AtomicBool::new(false);
 

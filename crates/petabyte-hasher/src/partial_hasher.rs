@@ -8,17 +8,14 @@ pub struct PartialHasher {
 }
 
 impl PartialHasher {
+    #[must_use]
     pub fn new(max_bytes: u64) -> Self {
         Self {
             default_max_bytes: max_bytes,
         }
     }
 
-    pub fn hash(
-        &self,
-        path: &Path,
-        cancel: Option<&AtomicBool>,
-    ) -> HashResult<PartialHash> {
+    pub fn hash(&self, path: &Path, cancel: Option<&AtomicBool>) -> HashResult<PartialHash> {
         self.hash_with_max_bytes(path, self.default_max_bytes, cancel)
     }
 
@@ -116,13 +113,9 @@ mod tests {
         let data = vec![b'A'; 16_384];
         f.write_all(&data).unwrap();
 
-        let partial_1k = hasher
-            .hash_with_max_bytes(f.path(), 1024, None)
-            .unwrap();
+        let partial_1k = hasher.hash_with_max_bytes(f.path(), 1024, None).unwrap();
         let partial_8k = hasher.hash(f.path(), None).unwrap();
-        let partial_full = hasher
-            .hash_with_max_bytes(f.path(), 16_384, None)
-            .unwrap();
+        let partial_full = hasher.hash_with_max_bytes(f.path(), 16_384, None).unwrap();
 
         // All 'A' bytes — hashing more data changes the hash even if content is uniform
         assert_ne!(partial_1k, partial_8k);

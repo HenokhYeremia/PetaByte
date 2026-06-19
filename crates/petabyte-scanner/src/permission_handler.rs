@@ -7,6 +7,7 @@ pub struct PermissionHandler {
 }
 
 impl PermissionHandler {
+    #[must_use]
     pub fn new(max_skips: u64) -> Self {
         Self {
             skipped_count: AtomicU64::new(0),
@@ -47,7 +48,7 @@ mod tests {
         let handler = PermissionHandler::new(10);
         let result = handler.handle_permission_denied("/test/restricted");
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), false);
+        assert!(!result.unwrap());
         assert_eq!(handler.skipped_count(), 1);
     }
 

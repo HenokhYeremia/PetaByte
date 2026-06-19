@@ -14,10 +14,8 @@ pub struct SafeMover {
 }
 
 impl SafeMover {
-    pub fn new(
-        journal: Box<dyn MoveJournalPort>,
-        file_op: Box<dyn FileOpPort>,
-    ) -> Self {
+    #[must_use]
+    pub fn new(journal: Box<dyn MoveJournalPort>, file_op: Box<dyn FileOpPort>) -> Self {
         Self {
             journal,
             file_op,
@@ -28,9 +26,13 @@ impl SafeMover {
 
     pub fn with_cancel(mut self, cancel: Arc<AtomicBool>) -> Self {
         self.cancel = Some(cancel);
-        Self { cancel: self.cancel, ..self }
+        Self {
+            cancel: self.cancel,
+            ..self
+        }
     }
 
+    #[must_use]
     pub fn with_trash(mut self, use_trash: bool) -> Self {
         self.use_trash = use_trash;
         self
@@ -61,17 +63,11 @@ impl SafeMover {
             return Err(MoveError::DestinationExists(destination.to_string()));
         }
 
-        let file_size = std::fs::metadata(source_path)
-            .map_err(MoveError::Io)?
-            .len();
+        let file_size = std::fs::metadata(source_path).map_err(MoveError::Io)?.len();
 
         // Phase 1: Journal intent
         self.check_cancelled()?;
-        let mut operation = MoveOperation::new(
-            source.clone(),
-            destination.clone(),
-            file_size,
-        );
+        let mut operation = MoveOperation::new(source.clone(), destination.clone(), file_size);
 
         // Set to Copying and record in journal
         operation.status = MoveStatus::Copying;
@@ -84,22 +80,20 @@ impl SafeMover {
         // Phase 2: Copy file
         self.check_cancelled()?;
         if let Some(parent) = dest_path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(MoveError::Io)?;
+            std::fs::create_dir_all(parent).map_err(MoveError::Io)?;
         }
 
         if let Err(e) = self.file_op.copy(source_path, dest_path) {
             operation.status = MoveStatus::Failed(e.clone());
             let _ = self.journal.mark_failed(&operation.id, &e);
-            return Err(MoveError::Io(
-                std::io::Error::new(std::io::ErrorKind::Other, e),
-            ));
+            return Err(MoveError::Io(std::io::Error::other(e)));
         }
 
         // Phase 3: Verify integrity
         self.check_cancelled()?;
         operation.status = MoveStatus::Verifying;
-        let verified = self.file_op
+        let verified = self
+            .file_op
             .verify_integrity(source_path, dest_path)
             .map_err(|e| {
                 let _ = self.journal.mark_failed(&operation.id, &e);
@@ -109,10 +103,7 @@ impl SafeMover {
         if !verified {
             // Clean up destination on verification failure
             let _ = std::fs::remove_file(dest_path);
-            let err = format!(
-                "Integrity check failed between {:?} and {:?}",
-                source_path, dest_path
-            );
+            let err = format!("Integrity check failed between {source_path:?} and {dest_path:?}");
             operation.status = MoveStatus::Failed(err.clone());
             let _ = self.journal.mark_failed(&operation.id, &err);
             return Err(MoveError::VerificationFailed(err));
@@ -131,9 +122,7 @@ impl SafeMover {
         if let Err(e) = delete_result {
             operation.status = MoveStatus::Failed(e.clone());
             let _ = self.journal.mark_failed(&operation.id, &e);
-            return Err(MoveError::Io(
-                std::io::Error::new(std::io::ErrorKind::Other, e),
-            ));
+            return Err(MoveError::Io(std::io::Error::other(e)));
         }
 
         // Phase 5: Update journal as completed
@@ -147,6 +136,7 @@ impl SafeMover {
         Ok(operation)
     }
 
+    #[must_use]
     pub fn move_batch(
         &self,
         sources: &[FilePath],

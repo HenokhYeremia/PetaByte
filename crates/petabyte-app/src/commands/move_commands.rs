@@ -25,7 +25,7 @@ pub async fn undo_move(
     state: tauri::State<'_, AppState>,
     operation_id: String,
 ) -> Result<(), String> {
-    let id = uuid::Uuid::parse_str(&operation_id).map_err(|e| format!("Invalid UUID: {}", e))?;
+    let id = uuid::Uuid::parse_str(&operation_id).map_err(|e| format!("Invalid UUID: {e}"))?;
     state.move_uc.undo(&id).map_err(|e| e.to_string())
 }
 

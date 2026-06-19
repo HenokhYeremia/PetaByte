@@ -1,16 +1,17 @@
-use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 
 use chrono::Utc;
 use petabyte_shared_models::entities::{FileEntry, ScanSession, ScanStatus};
-use petabyte_shared_models::ports::{FileRepository, ProgressEmitter, ProgressPayload, ScanBatchHandler, ScanRepository, ScanResult};
+use petabyte_shared_models::ports::{
+    FileRepository, ProgressEmitter, ProgressPayload, ScanBatchHandler, ScanRepository, ScanResult,
+};
 
 use crate::dto::{ScanConfig, ScanResultDto};
 use crate::error::EngineError;
 
-pub type ScanFunction = Arc<
-    dyn Fn(Arc<dyn ScanBatchHandler>, &AtomicBool) -> Result<ScanResult, String> + Send + Sync,
->;
+pub type ScanFunction =
+    Arc<dyn Fn(Arc<dyn ScanBatchHandler>, &AtomicBool) -> Result<ScanResult, String> + Send + Sync>;
 
 pub struct ScanDriveUseCase {
     file_repo: Arc<dyn FileRepository>,

@@ -19,7 +19,9 @@ impl CleanCacheUseCase {
     }
 
     pub fn calculate_total_size(&self) -> Result<u64, EngineError> {
-        self.cleaner.calculate_total_size().map_err(EngineError::Port)
+        self.cleaner
+            .calculate_total_size()
+            .map_err(EngineError::Port)
     }
 
     pub fn clean(&self) -> Result<CleanResultDto, EngineError> {

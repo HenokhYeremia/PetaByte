@@ -27,6 +27,7 @@ pub struct HashCache {
 }
 
 impl HashCache {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             inner: RwLock::new(HashMap::new()),
@@ -48,15 +49,12 @@ impl HashCache {
             let inner = self.inner.read();
             inner.get(&key).and_then(|e| e.partial.clone())
         };
-        match cloned {
-            Some(h) => {
-                *self.partial_hits.lock() += 1;
-                Some(PartialHash::new(h))
-            }
-            None => {
-                *self.partial_misses.lock() += 1;
-                None
-            }
+        if let Some(h) = cloned {
+            *self.partial_hits.lock() += 1;
+            Some(PartialHash::new(h))
+        } else {
+            *self.partial_misses.lock() += 1;
+            None
         }
     }
 
@@ -66,15 +64,12 @@ impl HashCache {
             let inner = self.inner.read();
             inner.get(&key).and_then(|e| e.full.clone())
         };
-        match cloned {
-            Some(h) => {
-                *self.full_hits.lock() += 1;
-                Some(FileHash::new(h))
-            }
-            None => {
-                *self.full_misses.lock() += 1;
-                None
-            }
+        if let Some(h) = cloned {
+            *self.full_hits.lock() += 1;
+            Some(FileHash::new(h))
+        } else {
+            *self.full_misses.lock() += 1;
+            None
         }
     }
 
@@ -141,7 +136,7 @@ mod tests {
     use std::path::PathBuf;
 
     fn test_path(name: &str) -> PathBuf {
-        PathBuf::from(format!("C:\\test\\{}", name))
+        PathBuf::from(format!("C:\\test\\{name}"))
     }
 
     #[test]
@@ -183,14 +178,8 @@ mod tests {
         cache.set_partial(100, &p, &PartialHash::new("hash1"));
         cache.set_partial(200, &p, &PartialHash::new("hash2"));
         assert_eq!(cache.len(), 2);
-        assert_eq!(
-            cache.get_partial(100, &p),
-            Some(PartialHash::new("hash1"))
-        );
-        assert_eq!(
-            cache.get_partial(200, &p),
-            Some(PartialHash::new("hash2"))
-        );
+        assert_eq!(cache.get_partial(100, &p), Some(PartialHash::new("hash1")));
+        assert_eq!(cache.get_partial(200, &p), Some(PartialHash::new("hash2")));
     }
 
     #[test]
@@ -244,9 +233,6 @@ mod tests {
         cache.set_partial(100, &p, &PartialHash::new("old"));
         cache.set_partial(100, &p, &PartialHash::new("new"));
         assert_eq!(cache.len(), 1);
-        assert_eq!(
-            cache.get_partial(100, &p),
-            Some(PartialHash::new("new"))
-        );
+        assert_eq!(cache.get_partial(100, &p), Some(PartialHash::new("new")));
     }
 }

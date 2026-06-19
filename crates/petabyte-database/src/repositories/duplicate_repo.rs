@@ -29,17 +29,17 @@ impl DuplicateRepository {
         ";
         let mut stmt = conn
             .prepare(sql)
-            .map_err(|e| format!("Failed to prepare: {}", e))?;
+            .map_err(|e| format!("Failed to prepare: {e}"))?;
         let mut rows = stmt
             .query(rusqlite::params![session_id, min_group_size as i64])
-            .map_err(|e| format!("Failed to query: {}", e))?;
+            .map_err(|e| format!("Failed to query: {e}"))?;
 
         let mut results = Vec::new();
         loop {
-            match rows.next().map_err(|e| format!("Failed to fetch: {}", e))? {
+            match rows.next().map_err(|e| format!("Failed to fetch: {e}"))? {
                 Some(row) => {
-                    let size: u64 = row.get(0).map_err(|e| format!("Parse error: {}", e))?;
-                    let count: i64 = row.get(1).map_err(|e| format!("Parse error: {}", e))?;
+                    let size: u64 = row.get(0).map_err(|e| format!("Parse error: {e}"))?;
+                    let count: i64 = row.get(1).map_err(|e| format!("Parse error: {e}"))?;
                     results.push((size, count));
                 }
                 None => break,
@@ -62,19 +62,19 @@ impl DuplicateRepository {
         ";
         let mut stmt = conn
             .prepare(sql)
-            .map_err(|e| format!("Failed to prepare: {}", e))?;
+            .map_err(|e| format!("Failed to prepare: {e}"))?;
         let mut rows = stmt
             .query(rusqlite::params![session_id, file_size])
-            .map_err(|e| format!("Failed to query: {}", e))?;
+            .map_err(|e| format!("Failed to query: {e}"))?;
 
         let mut results = Vec::new();
         loop {
-            match rows.next().map_err(|e| format!("Failed to fetch: {}", e))? {
+            match rows.next().map_err(|e| format!("Failed to fetch: {e}"))? {
                 Some(row) => {
-                    let id: i64 = row.get(0).map_err(|e| format!("Parse error: {}", e))?;
-                    let path: String = row.get(1).map_err(|e| format!("Parse error: {}", e))?;
-                    let name: String = row.get(2).map_err(|e| format!("Parse error: {}", e))?;
-                    let size: u64 = row.get(3).map_err(|e| format!("Parse error: {}", e))?;
+                    let id: i64 = row.get(0).map_err(|e| format!("Parse error: {e}"))?;
+                    let path: String = row.get(1).map_err(|e| format!("Parse error: {e}"))?;
+                    let name: String = row.get(2).map_err(|e| format!("Parse error: {e}"))?;
+                    let size: u64 = row.get(3).map_err(|e| format!("Parse error: {e}"))?;
                     results.push((id, path, name, size));
                 }
                 None => break,
@@ -106,7 +106,7 @@ impl DuplicateRepository {
                 group.total_wasted_bytes as i64,
             ],
         )
-        .map_err(|e| format!("Failed to insert group: {}", e))?;
+        .map_err(|e| format!("Failed to insert group: {e}"))?;
 
         let group_id = conn.last_insert_rowid();
         drop(conn);
@@ -136,11 +136,11 @@ impl DuplicateRepository {
                 member.file_path,
                 member.file_name,
                 member.file_size as i64,
-                member.is_keep as i64,
-                member.marked_for_removal as i64,
+                i64::from(member.is_keep),
+                i64::from(member.marked_for_removal),
             ],
         )
-        .map_err(|e| format!("Failed to insert member: {}", e))?;
+        .map_err(|e| format!("Failed to insert member: {e}"))?;
         Ok(())
     }
 
@@ -159,7 +159,7 @@ impl DuplicateRepository {
             sql,
             rusqlite::params![file_size as i64, partial_hash, full_hash],
         )
-        .map_err(|e| format!("Failed to insert hash: {}", e))?;
+        .map_err(|e| format!("Failed to insert hash: {e}"))?;
         Ok(conn.last_insert_rowid())
     }
 
@@ -169,20 +169,18 @@ impl DuplicateRepository {
     ) -> Result<Vec<(Option<String>, String)>, String> {
         let conn = self.conn.connection();
         let mut stmt = conn
-            .prepare(
-                "SELECT partial_hash, full_hash FROM file_hashes WHERE file_size = ?1",
-            )
-            .map_err(|e| format!("Failed to prepare: {}", e))?;
+            .prepare("SELECT partial_hash, full_hash FROM file_hashes WHERE file_size = ?1")
+            .map_err(|e| format!("Failed to prepare: {e}"))?;
         let mut rows = stmt
             .query([file_size])
-            .map_err(|e| format!("Failed to query: {}", e))?;
+            .map_err(|e| format!("Failed to query: {e}"))?;
 
         let mut results = Vec::new();
         loop {
-            match rows.next().map_err(|e| format!("Failed to fetch: {}", e))? {
+            match rows.next().map_err(|e| format!("Failed to fetch: {e}"))? {
                 Some(row) => {
-                    let partial: Option<String> = row.get(0).map_err(|e| format!("Parse: {}", e))?;
-                    let full: String = row.get(1).map_err(|e| format!("Parse: {}", e))?;
+                    let partial: Option<String> = row.get(0).map_err(|e| format!("Parse: {e}"))?;
+                    let full: String = row.get(1).map_err(|e| format!("Parse: {e}"))?;
                     results.push((partial, full));
                 }
                 None => break,
@@ -191,10 +189,7 @@ impl DuplicateRepository {
         Ok(results)
     }
 
-    pub fn get_duplicate_groups(
-        &self,
-        session_id: &str,
-    ) -> Result<Vec<DuplicateGroup>, String> {
+    pub fn get_duplicate_groups(&self, session_id: &str) -> Result<Vec<DuplicateGroup>, String> {
         let rows = {
             let conn = self.conn.connection();
             let mut stmt = conn
@@ -204,22 +199,29 @@ impl DuplicateRepository {
                      WHERE scan_session_id = ?1
                      ORDER BY total_wasted_bytes DESC",
                 )
-                .map_err(|e| format!("Failed to prepare: {}", e))?;
+                .map_err(|e| format!("Failed to prepare: {e}"))?;
             let mut rows = stmt
                 .query([session_id])
-                .map_err(|e| format!("Failed to query: {}", e))?;
+                .map_err(|e| format!("Failed to query: {e}"))?;
 
             let mut result = Vec::new();
             loop {
-                match rows.next().map_err(|e| format!("Failed to fetch: {}", e))? {
+                match rows.next().map_err(|e| format!("Failed to fetch: {e}"))? {
                     Some(row) => {
-                        let group_id: i64 = row.get(0).map_err(|e| format!("Parse: {}", e))?;
-                        let file_size: u64 = row.get(1).map_err(|e| format!("Parse: {}", e))?;
-                        let partial_hash: String = row.get(2).map_err(|e| format!("Parse: {}", e))?;
-                        let full_hash: String = row.get(3).map_err(|e| format!("Parse: {}", e))?;
-                        let file_count: u64 = row.get(4).map_err(|e| format!("Parse: {}", e))?;
-                        let wasted: u64 = row.get(5).map_err(|e| format!("Parse: {}", e))?;
-                        result.push((group_id, file_size, partial_hash, full_hash, file_count, wasted));
+                        let group_id: i64 = row.get(0).map_err(|e| format!("Parse: {e}"))?;
+                        let file_size: u64 = row.get(1).map_err(|e| format!("Parse: {e}"))?;
+                        let partial_hash: String = row.get(2).map_err(|e| format!("Parse: {e}"))?;
+                        let full_hash: String = row.get(3).map_err(|e| format!("Parse: {e}"))?;
+                        let file_count: u64 = row.get(4).map_err(|e| format!("Parse: {e}"))?;
+                        let wasted: u64 = row.get(5).map_err(|e| format!("Parse: {e}"))?;
+                        result.push((
+                            group_id,
+                            file_size,
+                            partial_hash,
+                            full_hash,
+                            file_count,
+                            wasted,
+                        ));
                     }
                     None => break,
                 }
@@ -252,20 +254,20 @@ impl DuplicateRepository {
                  WHERE group_id = ?1
                  ORDER BY file_path",
             )
-            .map_err(|e| format!("Failed to prepare: {}", e))?;
+            .map_err(|e| format!("Failed to prepare: {e}"))?;
         let mut rows = stmt
             .query([group_id])
-            .map_err(|e| format!("Failed to query: {}", e))?;
+            .map_err(|e| format!("Failed to query: {e}"))?;
 
         let mut members = Vec::new();
         loop {
-            match rows.next().map_err(|e| format!("Failed to fetch: {}", e))? {
+            match rows.next().map_err(|e| format!("Failed to fetch: {e}"))? {
                 Some(row) => {
-                    let path: String = row.get(0).map_err(|e| format!("Parse: {}", e))?;
-                    let name: String = row.get(1).map_err(|e| format!("Parse: {}", e))?;
-                    let size: u64 = row.get(2).map_err(|e| format!("Parse: {}", e))?;
-                    let is_keep: bool = row.get(3).map_err(|e| format!("Parse: {}", e))?;
-                    let marked: bool = row.get(4).map_err(|e| format!("Parse: {}", e))?;
+                    let path: String = row.get(0).map_err(|e| format!("Parse: {e}"))?;
+                    let name: String = row.get(1).map_err(|e| format!("Parse: {e}"))?;
+                    let size: u64 = row.get(2).map_err(|e| format!("Parse: {e}"))?;
+                    let is_keep: bool = row.get(3).map_err(|e| format!("Parse: {e}"))?;
+                    let marked: bool = row.get(4).map_err(|e| format!("Parse: {e}"))?;
                     members.push(DuplicateGroupMember {
                         file_path: path,
                         file_name: name,
@@ -288,19 +290,16 @@ impl DuplicateRepository {
              (SELECT id FROM duplicate_groups WHERE scan_session_id = ?1)",
             [session_id],
         )
-        .map_err(|e| format!("Failed to delete members: {}", e))?;
+        .map_err(|e| format!("Failed to delete members: {e}"))?;
         conn.execute(
             "DELETE FROM duplicate_groups WHERE scan_session_id = ?1",
             [session_id],
         )
-        .map_err(|e| format!("Failed to delete groups: {}", e))?;
+        .map_err(|e| format!("Failed to delete groups: {e}"))?;
         Ok(())
     }
 
-    pub fn get_duplicate_stats(
-        &self,
-        session_id: &str,
-    ) -> Result<(u64, u64, u64), String> {
+    pub fn get_duplicate_stats(&self, session_id: &str) -> Result<(u64, u64, u64), String> {
         let conn = self.conn.connection();
         let mut stmt = conn
             .prepare(
@@ -311,16 +310,16 @@ impl DuplicateRepository {
                  FROM duplicate_groups
                  WHERE scan_session_id = ?1",
             )
-            .map_err(|e| format!("Failed to prepare: {}", e))?;
+            .map_err(|e| format!("Failed to prepare: {e}"))?;
         let mut rows = stmt
             .query([session_id])
-            .map_err(|e| format!("Failed to query: {}", e))?;
+            .map_err(|e| format!("Failed to query: {e}"))?;
 
-        match rows.next().map_err(|e| format!("Failed to fetch: {}", e))? {
+        match rows.next().map_err(|e| format!("Failed to fetch: {e}"))? {
             Some(row) => {
-                let count: u64 = row.get(0).map_err(|e| format!("Parse: {}", e))?;
-                let files: u64 = row.get(1).map_err(|e| format!("Parse: {}", e))?;
-                let wasted: u64 = row.get(2).map_err(|e| format!("Parse: {}", e))?;
+                let count: u64 = row.get(0).map_err(|e| format!("Parse: {e}"))?;
+                let files: u64 = row.get(1).map_err(|e| format!("Parse: {e}"))?;
+                let wasted: u64 = row.get(2).map_err(|e| format!("Parse: {e}"))?;
                 Ok((count, files, wasted))
             }
             None => Ok((0, 0, 0)),
@@ -472,16 +471,14 @@ mod tests {
             full_hash: "f".into(),
             file_count: 2,
             total_wasted_bytes: 100,
-            members: vec![
-                DuplicateGroupMember {
-                    file_path: "/a.txt".into(),
-                    file_name: "a.txt".into(),
-                    file_size: 100,
-                    is_directory: false,
-                    is_keep: false,
-                    marked_for_removal: false,
-                },
-            ],
+            members: vec![DuplicateGroupMember {
+                file_path: "/a.txt".into(),
+                file_name: "a.txt".into(),
+                file_size: 100,
+                is_directory: false,
+                is_keep: false,
+                marked_for_removal: false,
+            }],
         };
         repo.save_duplicate_group(&sid, &group).unwrap();
         repo.delete_duplicate_groups(&sid).unwrap();
@@ -493,7 +490,9 @@ mod tests {
     #[test]
     fn test_save_hash_cache_entry() {
         let (_, repo) = setup();
-        let id = repo.save_hash_cache_entry(100, Some("partial1"), "full1").unwrap();
+        let id = repo
+            .save_hash_cache_entry(100, Some("partial1"), "full1")
+            .unwrap();
         assert!(id > 0);
 
         let entries = repo.get_hash_cache_for_size(100).unwrap();

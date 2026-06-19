@@ -4,11 +4,19 @@ use petabyte_shared_models::entities::{
 
 pub struct DuplicateReporter;
 
+impl Default for DuplicateReporter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DuplicateReporter {
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
 
+    #[must_use]
     pub fn build_groups(
         &self,
         full_hash_groups: Vec<(&str, Vec<&FileEntry>)>,
@@ -34,7 +42,7 @@ impl DuplicateReporter {
                     .collect();
 
                 DuplicateGroup {
-                    group_id: format!("dup_{}", idx),
+                    group_id: format!("dup_{idx}"),
                     file_size,
                     partial_hash: String::new(),
                     full_hash: full_hash_key.to_string(),
@@ -46,6 +54,7 @@ impl DuplicateReporter {
             .collect()
     }
 
+    #[must_use]
     pub fn compute_stats(&self, groups: &[DuplicateGroup]) -> DuplicateStats {
         let total_groups = groups.len() as u64;
         let total_duplicate_files: u64 = groups.iter().map(|g| g.file_count).sum();
@@ -69,6 +78,7 @@ impl DuplicateReporter {
         }
     }
 
+    #[must_use]
     pub fn build_result(
         &self,
         groups: Vec<DuplicateGroup>,
@@ -88,7 +98,9 @@ mod tests {
             FilePath::new(path).unwrap(),
             None,
             path.rsplit('/').next().unwrap_or(path).into(),
-            path.rsplit('.').next().map(|e| e.to_string()),
+            path.rsplit('.')
+                .next()
+                .map(std::string::ToString::to_string),
             size,
             false,
             false,
@@ -172,10 +184,8 @@ mod tests {
         let f3 = make_entry("/c.txt", 100);
         let f4 = make_entry("/d.txt", 50);
 
-        let groups = reporter.build_groups(vec![
-            ("hash1", vec![&f4]),
-            ("hash2", vec![&f1, &f2, &f3]),
-        ]);
+        let groups =
+            reporter.build_groups(vec![("hash1", vec![&f4]), ("hash2", vec![&f1, &f2, &f3])]);
         let stats = reporter.compute_stats(&groups);
         assert_eq!(stats.largest_group_wasted, 200);
         assert_eq!(stats.largest_group_count, 3);

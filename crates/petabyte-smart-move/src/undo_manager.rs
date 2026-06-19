@@ -10,6 +10,7 @@ pub struct InMemoryJournal {
 }
 
 impl InMemoryJournal {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             operations: Mutex::new(Vec::new()),
@@ -61,7 +62,7 @@ impl MoveJournalPort for InMemoryJournal {
             op.completed_at = Some(chrono::Utc::now());
             Ok(())
         } else {
-            Err(format!("Operation not found: {}", operation_id))
+            Err(format!("Operation not found: {operation_id}"))
         }
     }
 
@@ -71,7 +72,7 @@ impl MoveJournalPort for InMemoryJournal {
             op.status = MoveStatus::Failed(error.to_string());
             Ok(())
         } else {
-            Err(format!("Operation not found: {}", operation_id))
+            Err(format!("Operation not found: {operation_id}"))
         }
     }
 
@@ -81,7 +82,7 @@ impl MoveJournalPort for InMemoryJournal {
             op.status = MoveStatus::Reverted;
             Ok(())
         } else {
-            Err(format!("Operation not found: {}", operation_id))
+            Err(format!("Operation not found: {operation_id}"))
         }
     }
 
@@ -122,13 +123,10 @@ impl UndoManager {
             )));
         }
 
-        let file_size = std::fs::metadata(dest_path)
-            .map_err(MoveError::Io)?
-            .len();
+        let file_size = std::fs::metadata(dest_path).map_err(MoveError::Io)?.len();
 
         // Move destination back to source
-        std::fs::rename(dest_path, operation.source_path.as_ref())
-            .map_err(MoveError::Io)?;
+        std::fs::rename(dest_path, operation.source_path.as_ref()).map_err(MoveError::Io)?;
 
         let mut reverted = operation.clone();
         reverted.status = MoveStatus::Reverted;
@@ -137,17 +135,14 @@ impl UndoManager {
 
         self.journal
             .mark_reverted(&operation.id)
-            .map_err(|e| MoveError::Journal(e))?;
+            .map_err(MoveError::Journal)?;
 
         Ok(reverted)
     }
 
+    #[must_use]
     pub fn undo_batch(&self, operations: &[MoveOperation]) -> Vec<MoveResult<MoveOperation>> {
-        operations
-            .iter()
-            .rev()
-            .map(|op| self.undo(op))
-            .collect()
+        operations.iter().rev().map(|op| self.undo(op)).collect()
     }
 }
 

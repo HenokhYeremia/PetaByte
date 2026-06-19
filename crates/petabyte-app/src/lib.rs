@@ -1,12 +1,13 @@
-mod wiring;
 pub mod adapters;
 pub mod commands;
 pub mod events;
-pub mod state;
 pub mod menu;
+pub mod state;
+mod wiring;
 
 use tauri::Manager;
 
+#[must_use]
 pub fn create_builder() -> tauri::Builder<tauri::Wry> {
     tauri::Builder::default()
         .setup(|app| {

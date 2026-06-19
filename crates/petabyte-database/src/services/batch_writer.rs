@@ -1,6 +1,6 @@
 use std::collections::HashSet;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 
 use parking_lot::Mutex;
 use petabyte_shared_models::entities::FileEntry;
@@ -58,7 +58,7 @@ impl BatchWriter {
         let mut conn = self.conn.connection();
         let txn = conn
             .transaction()
-            .map_err(|e| format!("Failed to begin transaction: {}", e))?;
+            .map_err(|e| format!("Failed to begin transaction: {e}"))?;
 
         let sql = FileEntryRow::insert_sql();
         let mut inserted = 0u64;
@@ -75,7 +75,7 @@ impl BatchWriter {
 
             let params = FileEntryRow::insert_params(&self.session_id, entry);
             let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-                params.iter().map(|p| p.as_ref()).collect();
+                params.iter().map(std::convert::AsRef::as_ref).collect();
 
             match txn.execute(sql, params_refs.as_slice()) {
                 Ok(affected) => {
@@ -90,19 +90,18 @@ impl BatchWriter {
                     }
                 }
                 Err(e) => {
-                    log::warn!("DB insert failed for {}: {}", path_str, e);
+                    log::warn!("DB insert failed for {path_str}: {e}");
                     self.errors.fetch_add(1, Ordering::Relaxed);
                 }
             }
         }
 
         txn.commit()
-            .map_err(|e| format!("Failed to commit transaction: {}", e))?;
+            .map_err(|e| format!("Failed to commit transaction: {e}"))?;
 
         self.entries_received
             .fetch_add(entries.len() as u64, Ordering::Relaxed);
-        self.entries_inserted
-            .fetch_add(inserted, Ordering::Relaxed);
+        self.entries_inserted.fetch_add(inserted, Ordering::Relaxed);
         self.files_inserted.fetch_add(files, Ordering::Relaxed);
         self.dirs_inserted.fetch_add(dirs, Ordering::Relaxed);
         self.bytes_inserted.fetch_add(bytes, Ordering::Relaxed);
@@ -149,9 +148,9 @@ mod tests {
     use super::*;
     use crate::connection::ConnectionManager;
     use crate::migrations;
+    use crate::repositories::scan_repo::ScanRepositoryImpl;
     use petabyte_shared_models::entities::ScanSession;
     use petabyte_shared_models::ports::ScanRepository;
-    use crate::repositories::scan_repo::ScanRepositoryImpl;
     use petabyte_shared_models::value_objects::FilePath;
     use std::sync::Arc;
 
@@ -169,7 +168,11 @@ mod tests {
     fn make_entry(path: &str, size: u64, is_dir: bool) -> FileEntry {
         FileEntry::new(
             FilePath::new(path).unwrap(),
-            if is_dir { None } else { FilePath::new("/parent").ok() },
+            if is_dir {
+                None
+            } else {
+                FilePath::new("/parent").ok()
+            },
             if is_dir {
                 path.rsplit('/').next().unwrap_or("dir").into()
             } else {

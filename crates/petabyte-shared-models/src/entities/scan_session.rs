@@ -14,10 +14,12 @@ pub enum ScanStatus {
 }
 
 impl ScanStatus {
+    #[must_use]
     pub fn is_terminal(&self) -> bool {
         matches!(self, Self::Completed | Self::Cancelled | Self::Failed)
     }
 
+    #[must_use]
     pub fn is_active(&self) -> bool {
         matches!(self, Self::Pending | Self::Scanning | Self::Paused)
     }

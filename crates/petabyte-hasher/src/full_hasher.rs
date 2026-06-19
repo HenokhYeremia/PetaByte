@@ -11,15 +11,12 @@ pub struct FullHasher {
 }
 
 impl FullHasher {
+    #[must_use]
     pub fn new(chunk_size: usize) -> Self {
         Self { chunk_size }
     }
 
-    pub fn hash(
-        &self,
-        path: &Path,
-        cancel: Option<&AtomicBool>,
-    ) -> HashResult<FileHash> {
+    pub fn hash(&self, path: &Path, cancel: Option<&AtomicBool>) -> HashResult<FileHash> {
         if let Some(c) = cancel {
             if c.load(Ordering::Relaxed) {
                 return Err(crate::error::HashError::Cancelled);

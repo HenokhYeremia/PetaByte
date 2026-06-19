@@ -23,7 +23,7 @@ impl FileRepositoryImpl {
         let mut conn = self.conn.connection();
         let txn = conn
             .transaction()
-            .map_err(|e| format!("Failed to begin transaction: {}", e))?;
+            .map_err(|e| format!("Failed to begin transaction: {e}"))?;
 
         let sql = FileEntryRow::insert_sql();
         let mut count = 0u64;
@@ -31,19 +31,17 @@ impl FileRepositoryImpl {
         for entry in entries {
             let params = FileEntryRow::insert_params(session_id, entry);
             let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-                params.iter().map(|p| p.as_ref()).collect();
-            let affected = txn
-                .execute(sql, params_refs.as_slice())
-                .map_err(|e| {
-                    format!("Failed to insert file entry: {} at {}", e, entry.file_path)
-                })?;
+                params.iter().map(std::convert::AsRef::as_ref).collect();
+            let affected = txn.execute(sql, params_refs.as_slice()).map_err(|e| {
+                format!("Failed to insert file entry: {} at {}", e, entry.file_path)
+            })?;
             if affected > 0 {
                 count += 1;
             }
         }
 
         txn.commit()
-            .map_err(|e| format!("Failed to commit transaction: {}", e))?;
+            .map_err(|e| format!("Failed to commit transaction: {e}"))?;
         Ok(count)
     }
 
@@ -51,17 +49,17 @@ impl FileRepositoryImpl {
         let conn = self.conn.connection();
         let mut stmt = conn
             .prepare("SELECT file_path FROM scan_files WHERE session_id = ?1")
-            .map_err(|e| format!("Failed to prepare: {}", e))?;
+            .map_err(|e| format!("Failed to prepare: {e}"))?;
         let mut rows = stmt
             .query([session_id])
-            .map_err(|e| format!("Failed to query: {}", e))?;
+            .map_err(|e| format!("Failed to query: {e}"))?;
         let mut paths = Vec::new();
         loop {
-            match rows.next().map_err(|e| format!("Failed to fetch: {}", e))? {
+            match rows.next().map_err(|e| format!("Failed to fetch: {e}"))? {
                 Some(row) => {
                     paths.push(
                         row.get::<_, String>(0)
-                            .map_err(|e| format!("Failed to get path: {}", e))?,
+                            .map_err(|e| format!("Failed to get path: {e}"))?,
                     );
                 }
                 None => break,
@@ -73,11 +71,8 @@ impl FileRepositoryImpl {
     pub fn delete_by_session(&self, session_id: &str) -> Result<u64, String> {
         let conn = self.conn.connection();
         let deleted = conn
-            .execute(
-                "DELETE FROM scan_files WHERE session_id = ?1",
-                [session_id],
-            )
-            .map_err(|e| format!("Failed to delete files: {}", e))?;
+            .execute("DELETE FROM scan_files WHERE session_id = ?1", [session_id])
+            .map_err(|e| format!("Failed to delete files: {e}"))?;
         Ok(deleted as u64)
     }
 }
@@ -88,9 +83,9 @@ impl FileRepository for FileRepositoryImpl {
             let conn = self.conn.connection();
             let params = FileEntryRow::insert_params("global", entry);
             let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-                params.iter().map(|p| p.as_ref()).collect();
+                params.iter().map(std::convert::AsRef::as_ref).collect();
             conn.execute(FileEntryRow::insert_sql(), params_refs.as_slice())
-                .map_err(|e| format!("Failed to insert file entry: {}", e))?;
+                .map_err(|e| format!("Failed to insert file entry: {e}"))?;
         }
         Ok(())
     }
@@ -99,7 +94,7 @@ impl FileRepository for FileRepositoryImpl {
         let conn = self.conn.connection();
         let count: i64 = conn
             .query_row("SELECT COUNT(*) FROM scan_files", [], |row| row.get(0))
-            .map_err(|e| format!("Failed to count: {}", e))?;
+            .map_err(|e| format!("Failed to count: {e}"))?;
         Ok(count as u64)
     }
 }
@@ -109,7 +104,7 @@ mod tests {
     use super::*;
     use crate::connection::ConnectionManager;
     use crate::migrations;
-    use petabyte_shared_models::entities::ScanStatus;
+
     use petabyte_shared_models::value_objects::FilePath;
     use std::sync::Arc;
 

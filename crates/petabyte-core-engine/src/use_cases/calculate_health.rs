@@ -37,6 +37,7 @@ impl CalculateHealthUseCase {
         })
     }
 
+    #[must_use]
     pub fn get_recommendations(
         &self,
         metrics: &HealthMetrics,
@@ -69,17 +70,10 @@ mod tests {
                 scanned_at: Utc::now(),
             })
         }
-        fn get_recommendations(
-            &self,
-            _metrics: &HealthMetrics,
-        ) -> Vec<Recommendation> {
+        fn get_recommendations(&self, _metrics: &HealthMetrics) -> Vec<Recommendation> {
             vec![]
         }
-        fn compare(
-            &self,
-            _previous: &HealthMetrics,
-            _current: &HealthMetrics,
-        ) -> String {
+        fn compare(&self, _previous: &HealthMetrics, _current: &HealthMetrics) -> String {
             "No change".into()
         }
     }

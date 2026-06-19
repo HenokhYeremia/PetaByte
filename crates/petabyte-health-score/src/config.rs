@@ -34,6 +34,7 @@ impl Default for ScoringConfig {
 }
 
 impl ScoringConfig {
+    #[must_use]
     pub fn total_weight(&self) -> f64 {
         self.free_space_weight
             + self.duplicate_ratio_weight

@@ -1,7 +1,5 @@
-pub fn calculate_duplicate_ratio_score(
-    duplicate_bytes: u64,
-    total_bytes: u64,
-) -> f64 {
+#[must_use]
+pub fn calculate_duplicate_ratio_score(duplicate_bytes: u64, total_bytes: u64) -> f64 {
     if total_bytes == 0 {
         return 1.0;
     }

@@ -12,6 +12,7 @@ pub struct Checkpoint {
 }
 
 impl Checkpoint {
+    #[must_use]
     pub fn new(checkpoint_interval: usize) -> Self {
         Self {
             files_processed: 0,
@@ -24,6 +25,7 @@ impl Checkpoint {
         }
     }
 
+    #[must_use]
     pub fn should_checkpoint(&self) -> bool {
         let files_since_last = self.files_processed - self.last_checkpoint_file_count;
         let elapsed = self.last_checkpoint_at.elapsed().as_secs();

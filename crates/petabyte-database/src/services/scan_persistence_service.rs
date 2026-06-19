@@ -30,13 +30,12 @@ impl ScanPersistenceService {
         let conn = Arc::new(ConnectionManager::open(db_path)?);
         migrations::run_all(&conn)?;
 
-        let scan_repo: Arc<dyn ScanRepository> =
-            Arc::new(ScanRepositoryImpl::new(conn.clone()));
+        let scan_repo: Arc<dyn ScanRepository> = Arc::new(ScanRepositoryImpl::new(conn.clone()));
 
         let session = petabyte_shared_models::entities::ScanSession::new(&config.root_path);
         scan_repo
             .create_session(&session)
-            .map_err(|e| DatabaseError::Session(e))?;
+            .map_err(DatabaseError::Session)?;
 
         let session_id = session.session_id.clone();
         let session_manager = Arc::new(SessionManager::new(scan_repo, session));
@@ -48,8 +47,7 @@ impl ScanPersistenceService {
             DEFAULT_SYNC_INTERVAL,
         ));
 
-        let scanner =
-            Scanner::new(config).map_err(|e| DatabaseError::Connection(e.to_string()))?;
+        let scanner = Scanner::new(config).map_err(|e| DatabaseError::Connection(e.to_string()))?;
 
         Ok(Self {
             conn,
@@ -69,28 +67,24 @@ impl ScanPersistenceService {
         let conn = Arc::new(ConnectionManager::open(db_path)?);
         migrations::run_all(&conn)?;
 
-        let scan_repo: Arc<dyn ScanRepository> =
-            Arc::new(ScanRepositoryImpl::new(conn.clone()));
+        let scan_repo: Arc<dyn ScanRepository> = Arc::new(ScanRepositoryImpl::new(conn.clone()));
 
         let existing = scan_repo
             .get_session(session_id)
-            .map_err(|e| DatabaseError::Session(e))?
-            .ok_or_else(|| {
-                DatabaseError::Resume(format!("Session {} not found", session_id))
-            })?;
+            .map_err(DatabaseError::Session)?
+            .ok_or_else(|| DatabaseError::Resume(format!("Session {session_id} not found")))?;
 
         if existing.status.is_terminal() {
             return Err(DatabaseError::Resume(format!(
                 "Session {} is already in terminal state {:?}",
-                session_id,
-                existing.status
+                session_id, existing.status
             )));
         }
 
         let file_repo = FileRepositoryImpl::new(conn.clone());
         let existing_paths = file_repo
             .get_file_paths_for_session(session_id)
-            .map_err(|e| DatabaseError::Session(e))?;
+            .map_err(DatabaseError::Session)?;
 
         log::info!(
             "Resuming session {} with {} existing paths",
@@ -99,8 +93,7 @@ impl ScanPersistenceService {
         );
 
         let session_manager = Arc::new(SessionManager::new(scan_repo, existing));
-        let batch_writer =
-            Arc::new(BatchWriter::new(conn.clone(), session_id.to_string()));
+        let batch_writer = Arc::new(BatchWriter::new(conn.clone(), session_id.to_string()));
         batch_writer.init_seen_paths(existing_paths);
 
         let progress_sync = Arc::new(ProgressSynchronizer::new(
@@ -110,8 +103,7 @@ impl ScanPersistenceService {
             DEFAULT_SYNC_INTERVAL,
         ));
 
-        let scanner =
-            Scanner::new(config).map_err(|e| DatabaseError::Connection(e.to_string()))?;
+        let scanner = Scanner::new(config).map_err(|e| DatabaseError::Connection(e.to_string()))?;
 
         Ok(Self {
             conn,
@@ -130,7 +122,7 @@ impl ScanPersistenceService {
     ) -> Result<ScanResult, ScannerError> {
         self.session_manager
             .start()
-            .map_err(|e| ScannerError::Handler(e))?;
+            .map_err(ScannerError::Handler)?;
 
         let progress_sync = if emitter.is_some() {
             Arc::new(ProgressSynchronizer::new(
@@ -158,7 +150,7 @@ impl ScanPersistenceService {
                 let session = self
                     .session_manager
                     .complete()
-                    .map_err(|e| ScannerError::Handler(e))?;
+                    .map_err(ScannerError::Handler)?;
                 result.session_id = session.session_id;
                 result.total_files = session.total_files;
                 result.total_dirs = session.total_dirs;
@@ -191,14 +183,17 @@ impl ScanPersistenceService {
         self.scanner.resume();
     }
 
+    #[must_use]
     pub fn status(&self) -> &'static str {
         self.scanner.status()
     }
 
+    #[must_use]
     pub fn session(&self) -> petabyte_shared_models::entities::ScanSession {
         self.session_manager.session()
     }
 
+    #[must_use]
     pub fn progress(&self) -> ProgressPayload {
         ProgressPayload {
             scanned_files: self.batch_writer.files_inserted(),
@@ -233,14 +228,10 @@ mod tests {
     fn create_test_dir() -> TempDir {
         let dir = tempfile::tempdir().unwrap();
         for i in 0..3 {
-            let sub = dir.path().join(format!("sub_{}", i));
+            let sub = dir.path().join(format!("sub_{i}"));
             std::fs::create_dir_all(&sub).unwrap();
             for j in 0..5 {
-                std::fs::write(
-                    sub.join(format!("file_{}.txt", j)),
-                    format!("content_{}", j),
-                )
-                .unwrap();
+                std::fs::write(sub.join(format!("file_{j}.txt")), format!("content_{j}")).unwrap();
             }
         }
         dir
@@ -291,15 +282,14 @@ mod tests {
         let db_path = db.path().join("cancel.db").to_string_lossy().to_string();
         let root = dir.path().to_string_lossy().to_string();
 
-        let service =
-            ScanPersistenceService::new(&db_path, make_config(&root)).unwrap();
+        let service = ScanPersistenceService::new(&db_path, make_config(&root)).unwrap();
 
         service.cancel();
         let result = service.run(None);
 
         match result {
             Err(ScannerError::Cancelled) => {}
-            other => panic!("Expected Cancelled, got: {:?}", other),
+            other => panic!("Expected Cancelled, got: {other:?}"),
         }
         assert_eq!(service.status(), "cancelled");
     }
@@ -311,8 +301,7 @@ mod tests {
         let db_path = db.path().join("progress.db").to_string_lossy().to_string();
         let root = dir.path().to_string_lossy().to_string();
 
-        let service =
-            ScanPersistenceService::new(&db_path, make_config(&root)).unwrap();
+        let service = ScanPersistenceService::new(&db_path, make_config(&root)).unwrap();
         let emitter = Arc::new(TestEmitter {
             progress: Mutex::new(Vec::new()),
         });
@@ -335,8 +324,7 @@ mod tests {
         let db_path = db.path().join("resume.db").to_string_lossy().to_string();
         let root = dir.path().to_string_lossy().to_string();
 
-        let service =
-            ScanPersistenceService::new(&db_path, make_config(&root)).unwrap();
+        let service = ScanPersistenceService::new(&db_path, make_config(&root)).unwrap();
         let session_id = service.session().session_id.clone();
 
         // Simulate partial scan by writing some entries directly
@@ -362,12 +350,8 @@ mod tests {
             .unwrap();
 
         // Resume
-        let resumed = ScanPersistenceService::resume(
-            &db_path,
-            make_config(&root),
-            &session_id,
-        )
-        .unwrap();
+        let resumed =
+            ScanPersistenceService::resume(&db_path, make_config(&root), &session_id).unwrap();
 
         assert_eq!(resumed.session().session_id, session_id);
         assert_eq!(resumed.session().status, ScanStatus::Pending);
@@ -392,8 +376,7 @@ mod tests {
         let db_path = db.path().join("prog.db").to_string_lossy().to_string();
         let root = dir.path().to_string_lossy().to_string();
 
-        let service =
-            ScanPersistenceService::new(&db_path, make_config(&root)).unwrap();
+        let service = ScanPersistenceService::new(&db_path, make_config(&root)).unwrap();
 
         let progress = service.progress();
         assert_eq!(progress.status, "idle");
@@ -411,8 +394,7 @@ mod tests {
         let db_path = db.path().join("persist.db").to_string_lossy().to_string();
         let root = dir.path().to_string_lossy().to_string();
 
-        let service =
-            ScanPersistenceService::new(&db_path, make_config(&root)).unwrap();
+        let service = ScanPersistenceService::new(&db_path, make_config(&root)).unwrap();
         service.run(None).unwrap();
 
         // Verify data persisted by opening a new connection and checking counts
@@ -424,10 +406,9 @@ mod tests {
         assert_eq!(count, 19, "Should have 19 total entries in DB");
 
         // Verify session stored correctly
-        let scan_repo: Arc<dyn ScanRepository> =
-            Arc::new(ScanRepositoryImpl::new(Arc::new(
-                ConnectionManager::open(&db_path).unwrap(),
-            )));
+        let scan_repo: Arc<dyn ScanRepository> = Arc::new(ScanRepositoryImpl::new(Arc::new(
+            ConnectionManager::open(&db_path).unwrap(),
+        )));
         let sessions = scan_repo.list_sessions().unwrap();
         assert_eq!(sessions.len(), 1);
         assert_eq!(sessions[0].status, ScanStatus::Completed);

@@ -17,6 +17,7 @@ pub struct FileEntry {
 }
 
 impl FileEntry {
+    #[must_use]
     pub fn new(
         file_path: FilePath,
         parent_path: Option<FilePath>,

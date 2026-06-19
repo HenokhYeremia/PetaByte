@@ -11,6 +11,7 @@ pub struct SizeInfo {
 pub struct SizeCalculator;
 
 impl SizeCalculator {
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
@@ -26,7 +27,7 @@ impl SizeCalculator {
         for entry in walkdir::WalkDir::new(path)
             .follow_links(false)
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
         {
             if entry.file_type().is_dir() {
                 info.dir_count += 1;
@@ -99,11 +100,8 @@ mod tests {
     fn test_calculate_batch() {
         let dir = create_test_dir();
         let calc = SizeCalculator::new();
-        let paths = vec![
-            dir.path().join("f1.txt"),
-            dir.path().join("subdir"),
-        ];
-        let path_refs: Vec<&Path> = paths.iter().map(|p| p.as_path()).collect();
+        let paths = [dir.path().join("f1.txt"), dir.path().join("subdir")];
+        let path_refs: Vec<&Path> = paths.iter().map(std::path::PathBuf::as_path).collect();
         let results = calc.calculate_batch(&path_refs).unwrap();
         assert_eq!(results.len(), 2);
         assert!(results[0].1.total_bytes > 0);
@@ -113,7 +111,9 @@ mod tests {
     #[test]
     fn test_nonexistent_path() {
         let calc = SizeCalculator::new();
-        let info = calc.calculate(Path::new("C:\\nonexistent_path_xyz")).unwrap_or_default();
+        let info = calc
+            .calculate(Path::new("C:\\nonexistent_path_xyz"))
+            .unwrap_or_default();
         assert_eq!(info.total_bytes, 0);
     }
 }

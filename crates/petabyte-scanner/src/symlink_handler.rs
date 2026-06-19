@@ -8,6 +8,7 @@ pub enum SymlinkPolicy {
 }
 
 impl SymlinkPolicy {
+    #[must_use]
     pub fn from_config(follow_symlinks: bool) -> Self {
         if follow_symlinks {
             Self::Follow
@@ -23,11 +24,17 @@ pub struct SymlinkHandler {
 }
 
 impl SymlinkHandler {
+    #[must_use]
     pub fn new(policy: SymlinkPolicy) -> Self {
         Self { policy }
     }
 
-    pub fn should_process(&self, path: &FilePath, is_symlink: bool, target_exists: bool) -> Result<bool, super::ScannerError> {
+    pub fn should_process(
+        &self,
+        path: &FilePath,
+        is_symlink: bool,
+        target_exists: bool,
+    ) -> Result<bool, super::ScannerError> {
         if !is_symlink {
             return Ok(true);
         }
@@ -53,7 +60,7 @@ impl SymlinkHandler {
             Ok(_) => Ok(()),
             Err(e) => Err(super::ScannerError::WalkError {
                 path: path.to_string(),
-                message: format!("Symlink metadata error: {}", e),
+                message: format!("Symlink metadata error: {e}"),
             }),
         }
     }

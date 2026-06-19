@@ -3,7 +3,10 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum ScannerError {
     #[error("I/O error at {path}: {source}")]
-    Io { path: String, source: std::io::Error },
+    Io {
+        path: String,
+        source: std::io::Error,
+    },
 
     #[error("Path canonicalization error: {0}")]
     Canonicalize(String),

@@ -8,11 +8,11 @@ fn test_scanner_integration_real_directory() {
 
     // Build a realistic tree: 10 dirs, 100 files
     for i in 0..10 {
-        let sub = dir.path().join(format!("dir_{}", i));
+        let sub = dir.path().join(format!("dir_{i}"));
         std::fs::create_dir_all(&sub).unwrap();
         for j in 0..10 {
-            let content = format!("content_{}_{}", i, j);
-            std::fs::write(sub.join(format!("file_{}.txt", j)), &content).unwrap();
+            let content = format!("content_{i}_{j}");
+            std::fs::write(sub.join(format!("file_{j}.txt")), &content).unwrap();
         }
     }
 
@@ -47,12 +47,12 @@ fn test_scanner_integration_real_directory() {
         "Should have 111 entries (11 dirs + 100 files)"
     );
     assert_eq!(result.total_files, 100, "Should have 100 files");
-    assert_eq!(result.total_dirs, 11, "Should have 11 dirs (root + 10 subdirs)");
-    assert_eq!(result.total_errors, 0, "Should have 0 errors");
-    assert!(
-        result.elapsed_ms > 0,
-        "Elapsed time should be positive"
+    assert_eq!(
+        result.total_dirs, 11,
+        "Should have 11 dirs (root + 10 subdirs)"
     );
+    assert_eq!(result.total_errors, 0, "Should have 0 errors");
+    assert!(result.elapsed_ms > 0, "Elapsed time should be positive");
 }
 
 /// Integration test: verify deep nesting
@@ -63,9 +63,9 @@ fn test_scanner_deep_nesting() {
     // Create deeply nested structure: 20 levels deep
     let mut current = dir.path().to_path_buf();
     for i in 0..20 {
-        current = current.join(format!("level_{}", i));
+        current = current.join(format!("level_{i}"));
         std::fs::create_dir_all(&current).unwrap();
-        std::fs::write(current.join("file.txt"), format!("level_{}", i)).unwrap();
+        std::fs::write(current.join("file.txt"), format!("level_{i}")).unwrap();
     }
 
     let root = dir.path().to_string_lossy().to_string();
@@ -83,11 +83,11 @@ fn test_scanner_deep_nesting() {
     let result = scanner.run(handler).unwrap();
 
     // 21 dirs (root + 20 level dirs) + 20 files = 41 entries
+    assert_eq!(result.total_files, 20, "Should find 20 files (1 per level)");
     assert_eq!(
-        result.total_files, 20,
-        "Should find 20 files (1 per level)"
+        result.total_dirs, 21,
+        "Should find 21 directories (root + 20 levels)"
     );
-    assert_eq!(result.total_dirs, 21, "Should find 21 directories (root + 20 levels)");
     assert_eq!(entries.lock().unwrap().len(), 41);
 }
 
@@ -110,7 +110,10 @@ fn test_scanner_empty_directory() {
     let result = scanner.run(handler).unwrap();
 
     assert_eq!(result.total_files, 0, "Empty dir should have 0 files");
-    assert_eq!(result.total_dirs, 1, "Empty dir should have 1 dir (root counted)");
+    assert_eq!(
+        result.total_dirs, 1,
+        "Empty dir should have 1 dir (root counted)"
+    );
 }
 
 /// Integration test: batch boundary flushing
@@ -120,7 +123,11 @@ fn test_scanner_batch_flushing() {
 
     // Create enough files to trigger multiple batches (batch_size = 10)
     for i in 0..25 {
-        std::fs::write(dir.path().join(format!("file_{}.txt", i)), format!("content_{}", i)).unwrap();
+        std::fs::write(
+            dir.path().join(format!("file_{i}.txt")),
+            format!("content_{i}"),
+        )
+        .unwrap();
     }
 
     let root = dir.path().to_string_lossy().to_string();
@@ -143,7 +150,10 @@ fn test_scanner_batch_flushing() {
     let count = batch_count.lock().unwrap();
 
     assert_eq!(result.total_files, 25, "Should find 25 files");
-    assert!(*count >= 3, "Should have at least 3 batches (2 full + 1 partial)");
+    assert!(
+        *count >= 3,
+        "Should have at least 3 batches (2 full + 1 partial)"
+    );
 }
 
 /// Integration test: large file exclusion

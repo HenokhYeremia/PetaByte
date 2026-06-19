@@ -4,6 +4,7 @@ use std::path::Path;
 pub struct TrashHandler;
 
 impl TrashHandler {
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

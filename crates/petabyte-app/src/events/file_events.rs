@@ -1,5 +1,5 @@
-use tauri::Emitter;
 use petabyte_shared_models::entities::FileEntry;
+use tauri::Emitter;
 
 pub fn emit_file_found(handle: &tauri::AppHandle, entry: &FileEntry) {
     let _ = handle.emit("file:found", entry);

@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
-use jwalk::{WalkDir, DirEntry};
+use jwalk::{DirEntry, WalkDir};
 use parking_lot::{Condvar, Mutex};
 
 use petabyte_shared_models::entities::FileEntry;
@@ -47,7 +47,12 @@ impl Scanner {
     {
         let prev = self
             .status
-            .compare_exchange(STATUS_IDLE, STATUS_RUNNING, Ordering::SeqCst, Ordering::SeqCst)
+            .compare_exchange(
+                STATUS_IDLE,
+                STATUS_RUNNING,
+                Ordering::SeqCst,
+                Ordering::SeqCst,
+            )
             .unwrap_or(STATUS_IDLE);
         if prev != STATUS_IDLE {
             return Err(ScannerError::InvalidConfig(
@@ -64,7 +69,7 @@ impl Scanner {
 
         let mut batch: Vec<FileEntry> = Vec::with_capacity(self.config.batch_size);
 
-        for result in WalkDir::new(&root_path_buf).into_iter() {
+        for result in WalkDir::new(&root_path_buf) {
             if self.cancel_flag.load(Ordering::Relaxed) {
                 self.status.store(STATUS_CANCELLED, Ordering::Release);
                 return Err(ScannerError::Cancelled);
@@ -85,8 +90,7 @@ impl Scanner {
                 Err(e) => {
                     let path = e
                         .path()
-                        .map(|p| p.to_string_lossy().to_string())
-                        .unwrap_or_else(|| "<unknown>".into());
+                        .map_or_else(|| "<unknown>".into(), |p| p.to_string_lossy().to_string());
                     let _ = permission_handler.handle_permission_denied(&path);
                     checkpoint.errors += 1;
                     continue;
@@ -104,21 +108,20 @@ impl Scanner {
 
             let file_size = if is_dir {
                 0u64
+            } else if let Ok(m) = std::fs::metadata(&*dir_entry.path()) {
+                m.len()
             } else {
-                match std::fs::metadata(&*dir_entry.path()) {
-                    Ok(m) => m.len(),
-                    Err(_) => {
-                        checkpoint.errors += 1;
-                        continue;
-                    }
-                }
+                checkpoint.errors += 1;
+                continue;
             };
 
             if !filter.should_include(&path_str, is_dir, file_size, depth) {
                 continue;
             }
 
-            if let Some(file_entry) = entry_mapper::map_dir_entry(&dir_entry, &self.config.root_path) {
+            if let Some(file_entry) =
+                entry_mapper::map_dir_entry(&dir_entry, &self.config.root_path)
+            {
                 if file_entry.is_directory {
                     checkpoint.dirs_processed += 1;
                 } else {
@@ -130,7 +133,7 @@ impl Scanner {
 
             if batch.len() >= self.config.batch_size {
                 let entries = std::mem::take(&mut batch);
-                (handler)(entries).map_err(|e| ScannerError::Handler(e))?;
+                (handler)(entries).map_err(ScannerError::Handler)?;
             }
 
             if checkpoint.should_checkpoint() {
@@ -146,7 +149,7 @@ impl Scanner {
 
         if !batch.is_empty() {
             let entries = std::mem::take(&mut batch);
-            (handler)(entries).map_err(|e| ScannerError::Handler(e))?;
+            (handler)(entries).map_err(ScannerError::Handler)?;
         }
 
         self.status.store(STATUS_COMPLETED, Ordering::Release);
@@ -184,6 +187,7 @@ impl Scanner {
         self.resume();
     }
 
+    #[must_use]
     pub fn status(&self) -> &'static str {
         match self.status.load(Ordering::Acquire) {
             STATUS_IDLE => "idle",
@@ -204,6 +208,7 @@ impl Scanner {
         cv.notify_all();
     }
 
+    #[must_use]
     pub fn config(&self) -> &ScannerConfig {
         &self.config
     }
@@ -223,7 +228,11 @@ mod tests {
         std::fs::write(dir.path().join("file1.txt"), b"content1").unwrap();
         std::fs::write(dir.path().join("file2.rs"), b"fn main() {}").unwrap();
         std::fs::write(dir.path().join("sub1").join("file3.png"), b"pngdata").unwrap();
-        std::fs::write(dir.path().join("sub1").join("nested").join("deep.txt"), b"deep").unwrap();
+        std::fs::write(
+            dir.path().join("sub1").join("nested").join("deep.txt"),
+            b"deep",
+        )
+        .unwrap();
 
         dir
     }
@@ -247,8 +256,15 @@ mod tests {
         let entries = all_entries.lock().unwrap();
 
         assert_eq!(scan_result.total_files, 4, "Should find 4 files");
-        assert_eq!(scan_result.total_dirs, 4, "Should find 4 dirs (root, sub1, sub2, nested)");
-        assert_eq!(entries.len(), 8, "Should have 8 total entries (4 files + 4 dirs)");
+        assert_eq!(
+            scan_result.total_dirs, 4,
+            "Should find 4 dirs (root, sub1, sub2, nested)"
+        );
+        assert_eq!(
+            entries.len(),
+            8,
+            "Should have 8 total entries (4 files + 4 dirs)"
+        );
     }
 
     #[test]
@@ -268,7 +284,7 @@ mod tests {
 
         match result {
             Err(ScannerError::Cancelled) => {}
-            other => panic!("Expected Cancelled, got: {:?}", other),
+            other => panic!("Expected Cancelled, got: {other:?}"),
         }
     }
 

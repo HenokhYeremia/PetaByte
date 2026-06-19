@@ -1,5 +1,5 @@
-use tauri::Emitter;
 use petabyte_shared_models::ports::{ProgressEmitter, ProgressPayload};
+use tauri::Emitter;
 
 #[derive(Clone)]
 pub struct AppProgressEmitter {
@@ -7,6 +7,7 @@ pub struct AppProgressEmitter {
 }
 
 impl AppProgressEmitter {
+    #[must_use]
     pub fn new(app_handle: tauri::AppHandle) -> Self {
         Self { app_handle }
     }

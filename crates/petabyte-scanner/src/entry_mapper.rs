@@ -3,10 +3,8 @@ use petabyte_shared_models::entities::FileEntry;
 use petabyte_shared_models::value_objects::FilePath;
 use std::time::UNIX_EPOCH;
 
-pub fn map_dir_entry(
-    entry: &DirEntry<((), ())>,
-    _root_path: &str,
-) -> Option<FileEntry> {
+#[must_use]
+pub fn map_dir_entry(entry: &DirEntry<((), ())>, _root_path: &str) -> Option<FileEntry> {
     let path = entry.path();
     let path_str = path.to_string_lossy();
     let file_path = FilePath::new(path_str.as_ref()).ok()?;
@@ -18,7 +16,7 @@ pub fn map_dir_entry(
     let extension = path
         .extension()
         .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase());
+        .map(str::to_lowercase);
 
     let depth = entry.depth as u32;
     let is_dir = entry.file_type.is_dir();
@@ -36,8 +34,7 @@ pub fn map_dir_entry(
         .modified()
         .ok()
         .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-        .map(|d| d.as_secs() as i64)
-        .unwrap_or(0);
+        .map_or(0, |d| d.as_secs() as i64);
 
     Some(FileEntry::new(
         file_path,
@@ -67,7 +64,7 @@ mod tests {
 
         let entry = WalkDir::new(&dir)
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
             .find(|e| e.path().ends_with("test.txt"))
             .unwrap();
 
@@ -91,7 +88,7 @@ mod tests {
 
         let entry = WalkDir::new(&dir)
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(std::result::Result::ok)
             .find(|e| e.path().to_string_lossy().ends_with("subdir"))
             .unwrap();
 

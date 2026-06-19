@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+#[must_use]
 pub fn normalize_path(path: &Path) -> PathBuf {
     let path_str = path.to_string_lossy().replace('\\', "/");
     let path = Path::new(&path_str);
@@ -30,13 +31,14 @@ pub fn normalize_path(path: &Path) -> PathBuf {
     result
 }
 
+#[must_use]
 pub fn is_hidden(path: &Path) -> bool {
     path.file_name()
         .and_then(|n| n.to_str())
-        .map(|s| s.starts_with('.') || s.starts_with("~$"))
-        .unwrap_or(false)
+        .is_some_and(|s| s.starts_with('.') || s.starts_with("~$"))
 }
 
+#[must_use]
 pub fn is_system_directory(path: &Path) -> bool {
     let path_str = path.to_string_lossy().replace('\\', "/");
     crate::constants::SYSTEM_DIRECTORIES
@@ -44,6 +46,7 @@ pub fn is_system_directory(path: &Path) -> bool {
         .any(|d| path_str.starts_with(d) || path_str == *d)
 }
 
+#[must_use]
 pub fn is_temp_extension(ext: &str) -> bool {
     matches!(
         ext.to_lowercase().as_str(),

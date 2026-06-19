@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use std::fmt;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct FilePath(PathBuf);
@@ -18,34 +18,42 @@ impl FilePath {
         Self(path.into())
     }
 
+    #[must_use]
     pub fn as_path(&self) -> &Path {
         &self.0
     }
 
+    #[must_use]
     pub fn into_inner(self) -> PathBuf {
         self.0
     }
 
+    #[must_use]
     pub fn as_str(&self) -> std::borrow::Cow<'_, str> {
         self.0.to_string_lossy()
     }
 
+    #[must_use]
     pub fn parent(&self) -> Option<FilePath> {
         self.0.parent().map(|p| FilePath(p.to_path_buf()))
     }
 
+    #[must_use]
     pub fn file_name(&self) -> Option<&str> {
         self.0.file_name().and_then(|n| n.to_str())
     }
 
+    #[must_use]
     pub fn extension(&self) -> Option<&str> {
         self.0.extension().and_then(|e| e.to_str())
     }
 
+    #[must_use]
     pub fn starts_with(&self, other: &FilePath) -> bool {
         self.0.starts_with(&other.0)
     }
 
+    #[must_use]
     pub fn to_string_lossy(&self) -> std::borrow::Cow<'_, str> {
         self.0.to_string_lossy()
     }

@@ -8,16 +8,19 @@ pub struct RuleEngine {
 }
 
 impl RuleEngine {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             rules: builtin_rules(),
         }
     }
 
+    #[must_use]
     pub fn with_rules(rules: Vec<CacheRule>) -> Self {
         Self { rules }
     }
 
+    #[must_use]
     pub fn rules(&self) -> &[CacheRule] {
         &self.rules
     }
@@ -27,18 +30,21 @@ impl RuleEngine {
     }
 
     pub fn load_yaml(&mut self, path: &Path) -> CleanerResult<()> {
-        let content = std::fs::read_to_string(path)
-            .map_err(|e| CleanerError::RuleParse(format!("Failed to read {}: {}", path.display(), e)))?;
+        let content = std::fs::read_to_string(path).map_err(|e| {
+            CleanerError::RuleParse(format!("Failed to read {}: {}", path.display(), e))
+        })?;
         let custom_rules: Vec<CacheRule> = serde_yaml::from_str(&content)
-            .map_err(|e| CleanerError::RuleParse(format!("YAML parse error: {}", e)))?;
+            .map_err(|e| CleanerError::RuleParse(format!("YAML parse error: {e}")))?;
         self.rules.extend(custom_rules);
         Ok(())
     }
 
+    #[must_use]
     pub fn enabled_rules(&self) -> Vec<&CacheRule> {
         self.rules.iter().filter(|r| r.default_enabled).collect()
     }
 
+    #[must_use]
     pub fn rules_for_category(&self, category: &CacheCategory) -> Vec<&CacheRule> {
         self.rules
             .iter()
@@ -46,6 +52,7 @@ impl RuleEngine {
             .collect()
     }
 
+    #[must_use]
     pub fn match_path(&self, path: &Path) -> Vec<&CacheRule> {
         let path_str = path.to_string_lossy().replace('\\', "/");
         self.rules
@@ -151,7 +158,10 @@ mod tests {
 
     #[test]
     fn test_glob_match() {
-        assert!(glob_match("**/node_modules", "/home/user/project/node_modules"));
+        assert!(glob_match(
+            "**/node_modules",
+            "/home/user/project/node_modules"
+        ));
         assert!(!glob_match("**/node_modules", "/home/user/project/src"));
     }
 

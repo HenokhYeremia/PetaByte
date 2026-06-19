@@ -1,7 +1,5 @@
-pub fn calculate_fragmentation_score(
-    total_files: u64,
-    total_directories: u64,
-) -> f64 {
+#[must_use]
+pub fn calculate_fragmentation_score(total_files: u64, total_directories: u64) -> f64 {
     if total_directories == 0 {
         return 1.0;
     }

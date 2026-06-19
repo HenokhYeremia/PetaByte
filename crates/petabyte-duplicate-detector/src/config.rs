@@ -20,25 +20,30 @@ impl Default for DuplicateDetectionConfig {
 }
 
 impl DuplicateDetectionConfig {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn with_partial_hash_size(mut self, bytes: u64) -> Self {
         self.partial_hash_size = bytes;
         self
     }
 
+    #[must_use]
     pub fn with_extension_grouping(mut self, enabled: bool) -> Self {
         self.enable_extension_grouping = enabled;
         self
     }
 
+    #[must_use]
     pub fn with_max_concurrent_hashes(mut self, n: usize) -> Self {
         self.max_concurrent_hashes = n;
         self
     }
 
+    #[must_use]
     pub fn with_batch_size(mut self, n: usize) -> Self {
         self.batch_size = n;
         self

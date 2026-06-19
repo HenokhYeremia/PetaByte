@@ -10,25 +10,20 @@ pub struct CacheRule {
     pub default_enabled: bool,
 }
 
+#[must_use]
 pub fn builtin_rules() -> Vec<CacheRule> {
     vec![
         CacheRule {
             name: "npm_cache".into(),
             category: CacheCategory::Npm,
-            paths: vec![
-                "~/.npm/_cacache".into(),
-                "~/.npm/_cache".into(),
-            ],
+            paths: vec!["~/.npm/_cacache".into(), "~/.npm/_cache".into()],
             description: "npm package cache".into(),
             default_enabled: true,
         },
         CacheRule {
             name: "pip_cache".into(),
             category: CacheCategory::Pip,
-            paths: vec![
-                "~/.cache/pip".into(),
-                "~/AppData/Local/pip/cache".into(),
-            ],
+            paths: vec!["~/.cache/pip".into(), "~/AppData/Local/pip/cache".into()],
             description: "pip package cache".into(),
             default_enabled: true,
         },
@@ -45,19 +40,14 @@ pub fn builtin_rules() -> Vec<CacheRule> {
         CacheRule {
             name: "maven_cache".into(),
             category: CacheCategory::Maven,
-            paths: vec![
-                "~/.m2/repository".into(),
-            ],
+            paths: vec!["~/.m2/repository".into()],
             description: "Maven local repository".into(),
             default_enabled: false,
         },
         CacheRule {
             name: "gradle_cache".into(),
             category: CacheCategory::Gradle,
-            paths: vec![
-                "~/.gradle/caches".into(),
-                "~/.gradle/wrapper".into(),
-            ],
+            paths: vec!["~/.gradle/caches".into(), "~/.gradle/wrapper".into()],
             description: "Gradle build cache".into(),
             default_enabled: false,
         },
@@ -74,27 +64,21 @@ pub fn builtin_rules() -> Vec<CacheRule> {
         CacheRule {
             name: "go_cache".into(),
             category: CacheCategory::Go,
-            paths: vec![
-                "~/go/pkg/mod".into(),
-            ],
+            paths: vec!["~/go/pkg/mod".into()],
             description: "Go module cache".into(),
             default_enabled: false,
         },
         CacheRule {
             name: "mix_cache".into(),
             category: CacheCategory::Mix,
-            paths: vec![
-                "~/.mix".into(),
-            ],
+            paths: vec!["~/.mix".into()],
             description: "Elixir mix dependencies".into(),
             default_enabled: false,
         },
         CacheRule {
             name: "docker_cache".into(),
             category: CacheCategory::Docker,
-            paths: vec![
-                "~/AppData/Local/Docker".into(),
-            ],
+            paths: vec!["~/AppData/Local/Docker".into()],
             description: "Docker engine cache".into(),
             default_enabled: false,
         },
@@ -112,19 +96,14 @@ pub fn builtin_rules() -> Vec<CacheRule> {
         CacheRule {
             name: "node_modules".into(),
             category: CacheCategory::Other("Node".into()),
-            paths: vec![
-                "**/node_modules".into(),
-            ],
+            paths: vec!["**/node_modules".into()],
             description: "Node.js project dependencies".into(),
             default_enabled: false,
         },
         CacheRule {
             name: "temp_files".into(),
             category: CacheCategory::System,
-            paths: vec![
-                "~/AppData/Local/Temp".into(),
-                "/tmp".into(),
-            ],
+            paths: vec!["~/AppData/Local/Temp".into(), "/tmp".into()],
             description: "System temporary files".into(),
             default_enabled: false,
         },

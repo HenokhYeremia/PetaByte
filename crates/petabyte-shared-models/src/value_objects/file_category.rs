@@ -15,24 +15,33 @@ pub enum FileCategory {
 }
 
 impl FileCategory {
+    #[must_use]
     pub fn from_extension(ext: Option<&str>) -> Self {
-        let ext = ext.map(|e| e.to_lowercase());
+        let ext = ext.map(str::to_lowercase);
         let ext_str = ext.as_deref();
         match ext_str {
-            Some("doc" | "docx" | "xls" | "xlsx" | "ppt" | "pptx" | "pdf" | "txt"
-                | "rtf" | "odt" | "ods" | "odp" | "csv" | "md" | "tex" | "epub") => Self::Document,
+            Some(
+                "doc" | "docx" | "xls" | "xlsx" | "ppt" | "pptx" | "pdf" | "txt" | "rtf" | "odt"
+                | "ods" | "odp" | "csv" | "md" | "tex" | "epub",
+            ) => Self::Document,
 
-            Some("jpg" | "jpeg" | "png" | "gif" | "bmp" | "svg" | "webp" | "ico"
-                | "tiff" | "tif" | "psd" | "ai" | "raw" | "heic" | "avif") => Self::Image,
+            Some(
+                "jpg" | "jpeg" | "png" | "gif" | "bmp" | "svg" | "webp" | "ico" | "tiff" | "tif"
+                | "psd" | "ai" | "raw" | "heic" | "avif",
+            ) => Self::Image,
 
-            Some("mp4" | "avi" | "mkv" | "mov" | "wmv" | "flv" | "webm" | "m4v"
-                | "mpg" | "mpeg" | "3gp" | "ts") => Self::Video,
+            Some(
+                "mp4" | "avi" | "mkv" | "mov" | "wmv" | "flv" | "webm" | "m4v" | "mpg" | "mpeg"
+                | "3gp" | "ts",
+            ) => Self::Video,
 
-            Some("mp3" | "wav" | "flac" | "aac" | "ogg" | "wma" | "m4a" | "opus"
-                | "mid" | "midi") => Self::Audio,
+            Some(
+                "mp3" | "wav" | "flac" | "aac" | "ogg" | "wma" | "m4a" | "opus" | "mid" | "midi",
+            ) => Self::Audio,
 
-            Some("zip" | "rar" | "tar" | "gz" | "bz2" | "xz" | "7z" | "iso"
-                | "tgz" | "zst") => Self::Archive,
+            Some("zip" | "rar" | "tar" | "gz" | "bz2" | "xz" | "7z" | "iso" | "tgz" | "zst") => {
+                Self::Archive
+            }
 
             Some("cache" | "tmp") => Self::Cache,
             Some("temp" | "log") => Self::Temp,

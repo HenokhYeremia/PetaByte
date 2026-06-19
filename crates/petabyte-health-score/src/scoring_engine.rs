@@ -1,16 +1,18 @@
 use crate::config::ScoringConfig;
-use petabyte_shared_models::entities::{HealthFactor, HealthMetrics};
 use chrono::Utc;
+use petabyte_shared_models::entities::{HealthFactor, HealthMetrics};
 
 pub struct ScoringEngine {
     config: ScoringConfig,
 }
 
 impl ScoringEngine {
+    #[must_use]
     pub fn new(config: ScoringConfig) -> Self {
         Self { config }
     }
 
+    #[must_use]
     pub fn calculate(
         &self,
         total_files: u64,
@@ -27,23 +29,17 @@ impl ScoringEngine {
             total_capacity_bytes,
             &self.config,
         );
-        let duplicate_ratio = crate::factors::calculate_duplicate_ratio_score(
-            duplicate_bytes,
-            total_size_bytes,
-        );
-        let temp_file_ratio = crate::factors::calculate_temp_file_ratio_score(
-            temp_file_bytes,
-            total_size_bytes,
-        );
+        let duplicate_ratio =
+            crate::factors::calculate_duplicate_ratio_score(duplicate_bytes, total_size_bytes);
+        let temp_file_ratio =
+            crate::factors::calculate_temp_file_ratio_score(temp_file_bytes, total_size_bytes);
         let large_file_ratio = crate::factors::calculate_large_file_ratio_score(
             large_file_bytes,
             total_size_bytes,
             &self.config,
         );
-        let fragmentation = crate::factors::calculate_fragmentation_score(
-            total_files,
-            total_directories,
-        );
+        let fragmentation =
+            crate::factors::calculate_fragmentation_score(total_files, total_directories);
 
         let factors = vec![
             HealthFactor::new(
@@ -79,11 +75,8 @@ impl ScoringEngine {
         ];
 
         let total_weight = self.config.total_weight();
-        let weighted_score: f64 = factors
-            .iter()
-            .map(|f| f.score * f.weight)
-            .sum::<f64>()
-            / total_weight;
+        let weighted_score: f64 =
+            factors.iter().map(|f| f.score * f.weight).sum::<f64>() / total_weight;
 
         HealthMetrics {
             overall_score: (weighted_score * 100.0).round() / 100.0,
@@ -110,12 +103,14 @@ mod tests {
     fn test_perfect_health() {
         let engine = ScoringEngine::default();
         let metrics = engine.calculate(
-            1000, 20, 100_000_000, // 100MB
-            50_000_000_000, // 50GB free
+            1000,
+            20,
+            100_000_000,     // 100MB
+            50_000_000_000,  // 50GB free
             200_000_000_000, // 200GB total
-            0,  // no duplicates
-            0,  // no temp files
-            5_000_000,  // 5MB large files
+            0,               // no duplicates
+            0,               // no temp files
+            5_000_000,       // 5MB large files
         );
         assert!(metrics.overall_score > 0.85);
         assert_eq!(metrics.factors.len(), 5);
@@ -125,13 +120,14 @@ mod tests {
     fn test_poor_health() {
         let engine = ScoringEngine::default();
         let metrics = engine.calculate(
-            100, 50,  // few files per dir
-            1_000_000_000,  // total size
-            1_000_000_000,  // 1GB free (full disk)
-            1_000_000_000,  // total capacity = total size
-            500_000_000, // 50% duplicates
-            200_000_000, // 20% temp files
-            800_000_000, // 80% large files
+            100,
+            50,            // few files per dir
+            1_000_000_000, // total size
+            1_000_000_000, // 1GB free (full disk)
+            1_000_000_000, // total capacity = total size
+            500_000_000,   // 50% duplicates
+            200_000_000,   // 20% temp files
+            800_000_000,   // 80% large files
         );
         assert!(metrics.overall_score < 0.3);
     }
@@ -139,14 +135,24 @@ mod tests {
     #[test]
     fn test_factor_count() {
         let engine = ScoringEngine::default();
-        let metrics = engine.calculate(500, 10, 1_000_000, 10_000_000_000, 100_000_000_000, 0, 0, 0);
+        let metrics =
+            engine.calculate(500, 10, 1_000_000, 10_000_000_000, 100_000_000_000, 0, 0, 0);
         assert_eq!(metrics.factors.len(), 5);
     }
 
     #[test]
     fn test_score_range() {
         let engine = ScoringEngine::default();
-        let metrics = engine.calculate(500, 10, 1_000_000, 10_000_000_000, 100_000_000_000, 100_000, 50_000, 200_000);
+        let metrics = engine.calculate(
+            500,
+            10,
+            1_000_000,
+            10_000_000_000,
+            100_000_000_000,
+            100_000,
+            50_000,
+            200_000,
+        );
         assert!(metrics.overall_score >= 0.0);
         assert!(metrics.overall_score <= 1.0);
     }

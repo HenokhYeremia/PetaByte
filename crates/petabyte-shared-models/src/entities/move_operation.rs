@@ -26,11 +26,8 @@ pub struct MoveOperation {
 }
 
 impl MoveOperation {
-    pub fn new(
-        source: FilePath,
-        destination: FilePath,
-        file_size: u64,
-    ) -> Self {
+    #[must_use]
+    pub fn new(source: FilePath, destination: FilePath, file_size: u64) -> Self {
         Self {
             id: Uuid::new_v4(),
             source_path: source,
@@ -42,6 +39,7 @@ impl MoveOperation {
         }
     }
 
+    #[must_use]
     pub fn is_terminal(&self) -> bool {
         matches!(
             self.status,
@@ -49,6 +47,7 @@ impl MoveOperation {
         )
     }
 
+    #[must_use]
     pub fn can_undo(&self) -> bool {
         self.status == MoveStatus::Completed
     }

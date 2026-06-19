@@ -16,12 +16,13 @@ pub struct FilterRules {
 }
 
 impl FilterRules {
+    #[must_use]
     pub fn new(config: &super::ScannerConfig) -> Self {
         let mut rules: Vec<ExcludeRule> = Vec::new();
         for pattern in &config.exclude_patterns {
             if let Some(dir) = pattern.strip_prefix("**/") {
-                let slash_dir = format!("/{}", dir);
-                let bs_dir = format!("\\{}", dir);
+                let slash_dir = format!("/{dir}");
+                let bs_dir = format!("\\{dir}");
                 rules.push(ExcludeRule::EndsWith(slash_dir.clone()));
                 rules.push(ExcludeRule::EndsWith(bs_dir.clone()));
                 rules.push(ExcludeRule::Contains(slash_dir));
@@ -29,8 +30,8 @@ impl FilterRules {
             } else if let Some(dir) = pattern.strip_suffix('/') {
                 if dir.contains("**") {
                     let base = dir.trim_start_matches("**/");
-                    let slash_dir = format!("/{}", base);
-                    let bs_dir = format!("\\{}", base);
+                    let slash_dir = format!("/{base}");
+                    let bs_dir = format!("\\{base}");
                     rules.push(ExcludeRule::EndsWith(slash_dir.clone()));
                     rules.push(ExcludeRule::EndsWith(bs_dir.clone()));
                     rules.push(ExcludeRule::Contains(slash_dir));
@@ -45,7 +46,9 @@ impl FilterRules {
                     rules.push(ExcludeRule::Contains(pattern.clone()));
                 }
             } else if pattern.starts_with('/') {
-                rules.push(ExcludeRule::Prefix(pattern.trim_start_matches('/').to_string()));
+                rules.push(ExcludeRule::Prefix(
+                    pattern.trim_start_matches('/').to_string(),
+                ));
             } else {
                 rules.push(ExcludeRule::Contains(pattern.clone()));
             }
@@ -59,6 +62,7 @@ impl FilterRules {
         }
     }
 
+    #[must_use]
     pub fn should_include(&self, path: &str, is_dir: bool, file_size: u64, depth: u32) -> bool {
         if let Some(max_depth) = self.max_depth {
             if depth > max_depth {
@@ -69,7 +73,7 @@ impl FilterRules {
         if self.exclude_hidden {
             let path_lower = path.to_lowercase();
             if path_lower.contains("/.") || path_lower.contains("\\.\\.") {
-                let file_name = path.rsplit(|c| c == '/' || c == '\\').next().unwrap_or("");
+                let file_name = path.rsplit(['/', '\\']).next().unwrap_or("");
                 if file_name.starts_with('.') && file_name != "." && file_name != ".." {
                     return false;
                 }
