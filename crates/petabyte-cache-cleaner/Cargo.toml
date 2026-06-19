@@ -19,3 +19,12 @@ serde.workspace = true
 serde_yaml.workspace = true
 thiserror.workspace = true
 log.workspace = true
+chrono.workspace = true
+parking_lot.workspace = true
+walkdir = "2"
+regex = "1"
+shellexpand = "3"
+trash.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

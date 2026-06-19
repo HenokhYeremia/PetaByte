@@ -18,4 +18,11 @@ petabyte-shared = { path = "../petabyte-shared" }
 serde.workspace = true
 thiserror.workspace = true
 log.workspace = true
+parking_lot.workspace = true
+blake3.workspace = true
+uuid.workspace = true
+chrono.workspace = true
 trash.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

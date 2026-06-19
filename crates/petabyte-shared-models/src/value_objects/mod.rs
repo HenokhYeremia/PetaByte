@@ -8,4 +8,3 @@ pub use file_path::*;
 pub use file_size::*;
 pub use file_hash::*;
 pub use file_category::*;
-pub use errors::*;

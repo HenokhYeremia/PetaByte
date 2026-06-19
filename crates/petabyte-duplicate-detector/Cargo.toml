@@ -15,6 +15,17 @@ name = "petabyte_duplicate_detector"
 [dependencies]
 petabyte-shared-models = { path = "../petabyte-shared-models" }
 petabyte-shared = { path = "../petabyte-shared" }
+blake3.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 log.workspace = true
+parking_lot.workspace = true
+rayon.workspace = true
+
+[dev-dependencies]
+criterion = { workspace = true }
+tempfile = "3"
+
+[[bench]]
+name = "duplicate_detector_bench"
+harness = false
