@@ -4,4 +4,3 @@ mod journal_row;
 
 pub use file_row::*;
 pub use scan_row::*;
-pub use journal_row::*;

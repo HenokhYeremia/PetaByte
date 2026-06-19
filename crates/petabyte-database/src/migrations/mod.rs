@@ -3,5 +3,8 @@ mod m002_indexes;
 mod m003_duplicates;
 
 pub use m001_initial::*;
-pub use m002_indexes::*;
-pub use m003_duplicates::*;
+
+pub fn run_all(conn: &crate::connection::ConnectionManager) -> Result<(), crate::error::DatabaseError> {
+    m001_initial::run_initial_migration(conn)?;
+    Ok(())
+}

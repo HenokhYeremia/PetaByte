@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "PetaByte SQLite database layer — connection, migrations, repositories"
+description = "PetaByte SQLite database layer — connection, migrations, repositories, scanner persistence services"
 
 [lints]
 workspace = true
@@ -15,8 +15,14 @@ name = "petabyte_database"
 [dependencies]
 petabyte-shared-models = { path = "../petabyte-shared-models" }
 petabyte-shared = { path = "../petabyte-shared" }
+petabyte-scanner = { path = "../petabyte-scanner" }
 rusqlite.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 log.workspace = true
 parking_lot.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
