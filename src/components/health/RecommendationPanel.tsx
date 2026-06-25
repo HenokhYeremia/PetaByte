@@ -3,27 +3,28 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { AlertTriangle, AlertCircle, Info, ArrowRight } from "lucide-react";
 import { clsx } from "clsx";
-import type { MockHealthRecommendation } from "@/mocks/health";
+import type { HealthRecommendation } from "@/types";
 
 interface RecommendationPanelProps {
-  recommendations: MockHealthRecommendation[];
+  recommendations: HealthRecommendation[];
   loading?: boolean;
   onAction?: (id: string) => void;
 }
 
-const priorityConfig = {
+const priorityConfig: Record<string, { icon: typeof AlertTriangle; color: string; bg: string; border: string }> = {
+  urgent: { icon: AlertTriangle, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20", border: "border-red-200 dark:border-red-800" },
   high: { icon: AlertTriangle, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20", border: "border-red-200 dark:border-red-800" },
   medium: { icon: AlertCircle, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-200 dark:border-amber-800" },
   low: { icon: Info, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", border: "border-blue-200 dark:border-blue-800" },
 };
 
-const priorityLabel = { high: "High Priority", medium: "Medium Priority", low: "Low Priority" };
+const priorityLabel: Record<string, string> = { urgent: "Urgent", high: "High Priority", medium: "Medium Priority", low: "Low Priority" };
 
 function RecommendationCard({
   rec,
   onAction,
 }: {
-  rec: MockHealthRecommendation;
+  rec: HealthRecommendation;
   onAction?: (id: string) => void;
 }) {
   const cfg = priorityConfig[rec.priority];
@@ -97,7 +98,7 @@ export function RecommendationPanel({ recommendations, loading, onAction }: Reco
         <span className="text-xs text-zinc-400">{recommendations.length} items</span>
       </CardHeader>
       <CardContent className="space-y-4">
-        {(Object.entries(grouped) as [keyof typeof grouped, MockHealthRecommendation[]][]).map(
+        {(Object.entries(grouped) as [keyof typeof grouped, HealthRecommendation[]][]).map(
           ([priority, recs]) =>
             recs.length > 0 && (
               <div key={priority}>

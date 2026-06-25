@@ -2,10 +2,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { FileText, FolderTree, HardDrive, Clock, AlertTriangle, CheckCircle2, XCircle, Ban } from "lucide-react";
 import { formatBytes, formatCount, formatDuration } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockScanResult } from "@/mocks/scanner";
+import type { ScanResult } from "@/types";
 
 interface ScanResultSummaryProps {
-  result: MockScanResult | null;
+  result: ScanResult | null;
   loading?: boolean;
 }
 
@@ -60,7 +60,7 @@ export function ScanResultSummary({ result, loading }: ScanResultSummaryProps) {
     return null;
   }
 
-  const statusConfig = {
+  const statusConfig: Record<string, { icon: typeof CheckCircle2; label: string; color: string; bg: string }> = {
     completed: { icon: CheckCircle2, label: "Completed", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800" },
     cancelled: { icon: Ban, label: "Cancelled", color: "text-zinc-600 dark:text-zinc-400", bg: "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700" },
     failed: { icon: XCircle, label: "Failed", color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800" },

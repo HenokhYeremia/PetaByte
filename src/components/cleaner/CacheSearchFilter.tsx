@@ -1,10 +1,10 @@
 import { Search, X } from "lucide-react";
-import type { MockCacheFilter, MockSafetyStatus } from "@/mocks/cache";
+import type { CacheFilter, SafetyStatus } from "@/types";
 
 interface CacheSearchFilterProps {
-  filter: MockCacheFilter;
+  filter: CacheFilter;
   categories: { id: string; display_name: string }[];
-  onFilterChange: (partial: Partial<MockCacheFilter>) => void;
+  onFilterChange: (partial: Partial<CacheFilter>) => void;
 }
 
 export function CacheSearchFilter({ filter, categories, onFilterChange }: CacheSearchFilterProps) {
@@ -41,7 +41,7 @@ export function CacheSearchFilter({ filter, categories, onFilterChange }: CacheS
       </select>
       <select
         value={filter.safetyFilter}
-        onChange={(e) => onFilterChange({ safetyFilter: e.target.value as MockSafetyStatus | "all" })}
+        onChange={(e) => onFilterChange({ safetyFilter: e.target.value as SafetyStatus | "all" })}
         className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-xs text-zinc-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
       >
         <option value="all">All Safety</option>

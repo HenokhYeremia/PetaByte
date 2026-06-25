@@ -2,11 +2,11 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { HardDrive, Calendar, Hash, Copy, CheckCircle2, AlertTriangle } from "lucide-react";
 import { formatBytes } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockDuplicateGroup } from "@/mocks/duplicates";
+import type { DuplicateGroup } from "@/types";
 import { DuplicateActions } from "@/components/duplicates/DuplicateActions";
 
 interface DuplicateDetailsPanelProps {
-  group: MockDuplicateGroup | null;
+  group: DuplicateGroup | null;
   selectedFileIds: Set<string>;
   onToggleFile: (groupId: string, fileId: string) => void;
   onSelectAll: (select: boolean) => void;

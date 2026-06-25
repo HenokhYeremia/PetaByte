@@ -1,10 +1,10 @@
 import { Trash2 } from "lucide-react";
 import { SettingsSectionCard, SettingsSelect, SettingsToggle, SettingsTextInput } from "./SettingsPrimitives";
-import type { MockCacheCleanerSettings } from "@/mocks/settings";
+import type { CacheCleanerSettings } from "@/types";
 
 interface CacheCleanerSettingsProps {
-  settings: MockCacheCleanerSettings;
-  onChange: (partial: Partial<MockCacheCleanerSettings>) => void;
+  settings: CacheCleanerSettings;
+  onChange: (partial: Partial<CacheCleanerSettings>) => void;
   loading?: boolean;
   error?: string | null;
 }
@@ -67,7 +67,7 @@ export function CacheCleanerSettings({ settings, onChange, loading, error }: Cac
           { value: "moderate", label: "Safe & Moderate" },
           { value: "risky", label: "All levels" },
         ]}
-        onChange={(v) => onChange({ min_safety_level: v as MockCacheCleanerSettings["min_safety_level"] })}
+        onChange={(v) => onChange({ min_safety_level: v as CacheCleanerSettings["min_safety_level"] })}
       />
       <SettingsToggle
         label="Dry Run by Default"

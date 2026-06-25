@@ -1,10 +1,10 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { clsx } from "clsx";
-import type { MockHealthTrend, MockTrendDataPoint } from "@/mocks/health";
+import type { HealthTrend, TrendDataPoint } from "@/types";
 
 interface TrendVisualizationProps {
-  trend: MockHealthTrend | null;
+  trend: HealthTrend | null;
   loading?: boolean;
 }
 
@@ -13,7 +13,7 @@ function MiniChart({
   color,
   height = 80,
 }: {
-  data: MockTrendDataPoint[];
+  data: TrendDataPoint[];
   color: string;
   height?: number;
 }) {
@@ -55,7 +55,7 @@ function TrendCard({
   formatValue,
 }: {
   title: string;
-  data: MockTrendDataPoint[];
+  data: TrendDataPoint[];
   color: string;
   formatValue: (v: number) => string;
 }) {

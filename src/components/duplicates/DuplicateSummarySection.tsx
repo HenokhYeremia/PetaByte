@@ -2,10 +2,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Copy, FolderKanban, HardDrive, Clock, FileWarning } from "lucide-react";
 import { formatBytes, formatCount } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockDuplicateSummary } from "@/mocks/duplicates";
+import type { DuplicateSummary } from "@/types";
 
 interface DuplicateSummarySectionProps {
-  summary: MockDuplicateSummary | null;
+  summary: DuplicateSummary | null;
   loading?: boolean;
 }
 

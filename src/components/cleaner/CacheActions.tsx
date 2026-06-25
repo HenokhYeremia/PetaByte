@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/Button";
 import { ScanSearch, Eye, Trash2, ArrowRight, Loader2 } from "lucide-react";
-import type { MockCacheStatus } from "@/mocks/cache";
+import type { CacheStatus } from "@/types";
 
 interface CacheActionsProps {
-  status: MockCacheStatus;
+  status: CacheStatus;
   hasSelection: boolean;
   onAnalyze: () => void;
   onPreview: () => void;

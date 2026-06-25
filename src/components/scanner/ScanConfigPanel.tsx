@@ -2,21 +2,21 @@ import { DriveSelector } from "@/components/scanner/DriveSelector";
 import { FolderSelector } from "@/components/scanner/FolderSelector";
 import { IgnoreRulesPreview } from "@/components/scanner/IgnoreRulesPreview";
 import { ScanOptions } from "@/components/scanner/ScanOptions";
-import type { MockDrive, MockIgnoreRule, MockScanConfig } from "@/mocks/scanner";
+import type { Drive, IgnoreRule, ScanConfig } from "@/types";
 
 interface ScanConfigPanelProps {
-  drives: MockDrive[];
+  drives: Drive[];
   selectedDrive: string | null;
   onSelectDrive: (mountPoint: string) => void;
   path: string;
   onPathChange: (path: string) => void;
   onBrowse?: () => void;
   pathError?: string | null;
-  ignoreRules: MockIgnoreRule[];
+  ignoreRules: IgnoreRule[];
   onToggleIgnoreRule: (id: string) => void;
   onAddIgnoreRule?: () => void;
-  scanConfig: MockScanConfig;
-  onScanConfigChange: (config: Partial<MockScanConfig>) => void;
+  scanConfig: ScanConfig;
+  onScanConfigChange: (config: Partial<ScanConfig>) => void;
   loading?: boolean;
 }
 

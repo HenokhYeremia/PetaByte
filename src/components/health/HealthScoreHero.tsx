@@ -2,10 +2,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Clock } from "lucide-react";
 import { clsx } from "clsx";
-import type { MockHealthScore } from "@/mocks/health";
+import type { HealthScore } from "@/types";
 
 interface HealthScoreHeroProps {
-  score: MockHealthScore | null;
+  score: HealthScore | null;
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;

@@ -1,9 +1,9 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { clsx } from "clsx";
-import type { MockHealthScore } from "@/mocks/dashboard";
+import type { HealthScore } from "@/types";
 
 interface HealthScoreCardProps {
-  data: MockHealthScore | null;
+  data: HealthScore | null;
   loading?: boolean;
 }
 

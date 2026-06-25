@@ -1,10 +1,10 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { HardDrive, Copy, Trash2, File, Zap, Clock, Activity } from "lucide-react";
-import type { MockHealthFactor } from "@/mocks/health";
+import type { HealthFactor } from "@/types";
 
 interface ScoreBreakdownProps {
-  factors: MockHealthFactor[];
+  factors: HealthFactor[];
   loading?: boolean;
 }
 
@@ -18,7 +18,7 @@ const iconMap: Record<string, React.ReactNode> = {
   Activity: <Activity className="h-4 w-4" />,
 };
 
-function FactorBar({ factor }: { factor: MockHealthFactor }) {
+function FactorBar({ factor }: { factor: HealthFactor }) {
   const pct = factor.score;
 
   return (

@@ -1,10 +1,10 @@
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Trash2 } from "lucide-react";
 import { formatBytes } from "@/types/format";
-import type { MockCacheSummary } from "@/mocks/dashboard";
+import type { CacheSummary } from "@/types";
 
 interface CacheCleanerCardProps {
-  data: MockCacheSummary | null;
+  data: CacheSummary | null;
   loading?: boolean;
 }
 

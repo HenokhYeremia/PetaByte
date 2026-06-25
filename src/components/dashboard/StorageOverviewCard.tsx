@@ -1,9 +1,9 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { formatBytes } from "@/types/format";
-import type { MockStorageOverview } from "@/mocks/dashboard";
+import type { StorageOverview } from "@/types";
 
 interface StorageOverviewCardProps {
-  data: MockStorageOverview | null;
+  data: StorageOverview | null;
   loading?: boolean;
 }
 

@@ -1,10 +1,10 @@
 import { ArrowRightFromLine } from "lucide-react";
 import { SettingsSectionCard, SettingsSelect, SettingsTextInput, SettingsNumberInput } from "./SettingsPrimitives";
-import type { MockMoveSettings } from "@/mocks/settings";
+import type { MoveSettings } from "@/types";
 
 interface MoveSettingsProps {
-  settings: MockMoveSettings;
-  onChange: (partial: Partial<MockMoveSettings>) => void;
+  settings: MoveSettings;
+  onChange: (partial: Partial<MoveSettings>) => void;
   loading?: boolean;
   error?: string | null;
 }
@@ -35,7 +35,7 @@ export function MoveSettings({ settings, onChange, loading, error }: MoveSetting
           { value: "skip", label: "Skip conflicts" },
           { value: "rename", label: "Auto-rename new files" },
         ]}
-        onChange={(v) => onChange({ conflict_strategy: v as MockMoveSettings["conflict_strategy"] })}
+        onChange={(v) => onChange({ conflict_strategy: v as MoveSettings["conflict_strategy"] })}
       />
       <SettingsNumberInput
         label="Undo Retention"

@@ -3,22 +3,22 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Clock, HardDrive, FileText, FolderTree, History, Ban, CheckCircle2, XCircle } from "lucide-react";
 import { formatBytes, formatCount, formatDuration } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockHistoryItem } from "@/mocks/scanner";
+import type { HistoryItem } from "@/types";
 
 interface RecentScanHistoryProps {
-  history: MockHistoryItem[];
+  history: HistoryItem[];
   loading?: boolean;
   onSelect?: (id: string) => void;
   selectedId?: string | null;
 }
 
-const statusIcons = {
+const statusIcons: Record<string, typeof CheckCircle2> = {
   completed: CheckCircle2,
   cancelled: Ban,
   failed: XCircle,
 };
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   completed: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20",
   cancelled: "text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800",
   failed: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20",

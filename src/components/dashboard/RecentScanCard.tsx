@@ -1,10 +1,10 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Calendar, Clock, FileSearch } from "lucide-react";
 import { formatBytes, formatCount, formatDuration } from "@/types/format";
-import type { MockRecentScan } from "@/mocks/dashboard";
+import type { RecentScan } from "@/types";
 
 interface RecentScanCardProps {
-  data: MockRecentScan | null;
+  data: RecentScan | null;
   loading?: boolean;
 }
 

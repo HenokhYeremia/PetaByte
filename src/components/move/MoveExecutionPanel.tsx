@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/Button";
 import { Play, Square, Pause, RotateCcw, FileText, Clock, ArrowRight } from "lucide-react";
 import { formatBytes, formatDuration } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockMoveProgress } from "@/mocks/move";
-import type { MoveStatus } from "@/stores/moveStore";
+import type { MoveProgress } from "@/types";
+
+type MoveStatus = "idle" | "previewing" | "ready" | "moving" | "paused" | "completed" | "cancelled" | "failed";
 
 interface MoveExecutionPanelProps {
   status: MoveStatus;
-  progress: MockMoveProgress | null;
+  progress: MoveProgress | null;
   onStart: () => void;
   onCancel: () => void;
   onPause: () => void;

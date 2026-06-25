@@ -1,10 +1,10 @@
 import { StatCard } from "@/components/dashboard/StatCard";
 import { FileText } from "lucide-react";
 import { formatBytes, formatCount } from "@/types/format";
-import type { MockLargeFileSummary } from "@/mocks/dashboard";
+import type { LargeFileSummary } from "@/types";
 
 interface LargeFilesCardProps {
-  data: MockLargeFileSummary | null;
+  data: LargeFileSummary | null;
   loading?: boolean;
 }
 

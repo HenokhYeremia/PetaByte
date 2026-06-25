@@ -1,11 +1,11 @@
 import { CheckSquare, Square, Search, AlertTriangle, CheckCircle2, XCircle, Info } from "lucide-react";
 import { formatBytes } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockCacheCategory, MockCacheFilter } from "@/mocks/cache";
+import type { CacheCategory, CacheFilter } from "@/types";
 
 interface CacheDetailsTableProps {
-  categories: MockCacheCategory[];
-  filter: MockCacheFilter;
+  categories: CacheCategory[];
+  filter: CacheFilter;
   onSelectEntry: (entryId: string, selected: boolean) => void;
   onSelectAll: (selected: boolean) => void;
   loading?: boolean;

@@ -1,10 +1,10 @@
 import { ScanLine } from "lucide-react";
 import { SettingsSectionCard, SettingsSelect, SettingsTextInput, SettingsNumberInput, SettingsToggle, SettingsTextListInput } from "./SettingsPrimitives";
-import type { MockScannerSettings } from "@/mocks/settings";
+import type { ScannerSettings } from "@/types";
 
 interface ScannerSettingsProps {
-  settings: MockScannerSettings;
-  onChange: (partial: Partial<MockScannerSettings>) => void;
+  settings: ScannerSettings;
+  onChange: (partial: Partial<ScannerSettings>) => void;
   loading?: boolean;
   error?: string | null;
 }

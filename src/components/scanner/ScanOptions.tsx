@@ -1,11 +1,11 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Settings2 } from "lucide-react";
 import { clsx } from "clsx";
-import type { MockScanConfig } from "@/mocks/scanner";
+import type { ScanConfig } from "@/types";
 
 interface ScanOptionsProps {
-  config: MockScanConfig;
-  onChange: (config: Partial<MockScanConfig>) => void;
+  config: ScanConfig;
+  onChange: (config: Partial<ScanConfig>) => void;
   loading?: boolean;
 }
 

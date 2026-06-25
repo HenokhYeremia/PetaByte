@@ -2,14 +2,14 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { clsx } from "clsx";
 import { Spinner } from "@/components/ui/Spinner";
 import { CheckCircle2, AlertCircle, Clock } from "lucide-react";
-import type { MockScanStatus } from "@/mocks/dashboard";
+import type { ScanStatusData } from "@/types";
 
 interface ScanStatusWidgetProps {
-  data: MockScanStatus | null;
+  data: ScanStatusData | null;
   loading?: boolean;
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { icon: React.ElementType; label: string; description: string; color: string; bg: string }> = {
   idle: {
     icon: Clock,
     label: "Idle",

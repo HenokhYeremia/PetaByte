@@ -2,16 +2,16 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Undo2, FileText, HardDrive, Clock, BookOpen, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { formatBytes } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockUndoJournalEntry } from "@/mocks/move";
+import type { UndoJournalEntry } from "@/types";
 
 interface UndoCenterPreviewProps {
-  entries: MockUndoJournalEntry[];
+  entries: UndoJournalEntry[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   loading?: boolean;
 }
 
-const statusIcons = {
+const statusIcons: Record<string, { icon: typeof CheckCircle2; color: string; label: string }> = {
   available: { icon: CheckCircle2, color: "text-emerald-500", label: "Available" },
   used: { icon: XCircle, color: "text-zinc-400", label: "Used" },
   expired: { icon: AlertTriangle, color: "text-red-500", label: "Expired" },

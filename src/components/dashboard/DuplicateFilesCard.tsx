@@ -1,10 +1,10 @@
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Copy } from "lucide-react";
 import { formatBytes, formatCount } from "@/types/format";
-import type { MockDuplicateSummary } from "@/mocks/dashboard";
+import type { DuplicateSummary } from "@/types";
 
 interface DuplicateFilesCardProps {
-  data: MockDuplicateSummary | null;
+  data: DuplicateSummary | null;
   loading?: boolean;
 }
 

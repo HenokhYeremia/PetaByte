@@ -1,27 +1,33 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Search, X, ArrowRight, AlertTriangle, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Search, X, ArrowRight, AlertTriangle, CheckCircle2, XCircle, AlertCircle, Clock } from "lucide-react";
 import { formatBytes } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockMoveOperation, MockFilterState, MockConflictStatus, MockValidationStatus, MockResolution } from "@/mocks/move";
+import type { MoveOperation, MoveFilterState, ConflictStatus, ValidationStatus, Resolution } from "@/types";
 
 interface MovePreviewSectionProps {
-  operations: MockMoveOperation[];
-  filter: MockFilterState;
-  onFilterChange: (partial: Partial<MockFilterState>) => void;
-  onSetResolution: (operationId: string, resolution: MockResolution) => void;
-  onSetAllResolutions: (resolution: MockResolution) => void;
+  operations: MoveOperation[];
+  filter: MoveFilterState;
+  onFilterChange: (partial: Partial<MoveFilterState>) => void;
+  onSetResolution: (operationId: string, resolution: Resolution) => void;
+  onSetAllResolutions: (resolution: Resolution) => void;
   loading?: boolean;
 }
 
-const conflictIcons: Record<MockConflictStatus, { icon: React.ReactNode; color: string }> = {
+const conflictIcons: Record<ConflictStatus, { icon: React.ReactNode; color: string }> = {
   none: { icon: <CheckCircle2 className="h-3.5 w-3.5" />, color: "text-emerald-500" },
   exists: { icon: <AlertTriangle className="h-3.5 w-3.5" />, color: "text-amber-500" },
+  same_file: { icon: <AlertTriangle className="h-3.5 w-3.5" />, color: "text-amber-500" },
+  permission_denied: { icon: <XCircle className="h-3.5 w-3.5" />, color: "text-red-500" },
+  insufficient_space: { icon: <AlertTriangle className="h-3.5 w-3.5" />, color: "text-red-500" },
+  invalid_path: { icon: <XCircle className="h-3.5 w-3.5" />, color: "text-red-500" },
   rename_needed: { icon: <AlertCircle className="h-3.5 w-3.5" />, color: "text-blue-500" },
 };
 
-const validationIcons: Record<MockValidationStatus, { icon: React.ReactNode; color: string }> = {
+const validationIcons: Record<ValidationStatus, { icon: React.ReactNode; color: string }> = {
+  pending: { icon: <Clock className="h-3.5 w-3.5" />, color: "text-zinc-400" },
   valid: { icon: <CheckCircle2 className="h-3.5 w-3.5" />, color: "text-emerald-500" },
+  invalid: { icon: <XCircle className="h-3.5 w-3.5" />, color: "text-red-500" },
   warning: { icon: <AlertTriangle className="h-3.5 w-3.5" />, color: "text-amber-500" },
   error: { icon: <XCircle className="h-3.5 w-3.5" />, color: "text-red-500" },
 };
@@ -107,7 +113,7 @@ export function MovePreviewSection({
           </div>
           <select
             value={filter.conflictFilter}
-            onChange={(e) => onFilterChange({ conflictFilter: e.target.value as MockConflictStatus | "all" })}
+            onChange={(e) => onFilterChange({ conflictFilter: e.target.value as ConflictStatus | "all" })}
             className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-xs text-zinc-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
           >
             <option value="all">All Conflicts</option>
@@ -117,7 +123,7 @@ export function MovePreviewSection({
           </select>
           <select
             value={filter.validationFilter}
-            onChange={(e) => onFilterChange({ validationFilter: e.target.value as MockValidationStatus | "all" })}
+            onChange={(e) => onFilterChange({ validationFilter: e.target.value as ValidationStatus | "all" })}
             className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-xs text-zinc-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
           >
             <option value="all">All Status</option>
@@ -183,7 +189,7 @@ export function MovePreviewSection({
                 <div className="col-span-1 flex items-center justify-center">
                   <select
                     value={op.resolution}
-                    onChange={(e) => onSetResolution(op.id, e.target.value as MockResolution)}
+                    onChange={(e) => onSetResolution(op.id, e.target.value as Resolution)}
                     className={clsx(
                       "w-full rounded border px-1 py-0.5 text-[9px] focus:outline-none",
                       op.resolution === "replace" && "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-400",

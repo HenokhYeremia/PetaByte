@@ -1,10 +1,10 @@
 import { Copy } from "lucide-react";
 import { SettingsSectionCard, SettingsSelect, SettingsNumberInput, SettingsToggle } from "./SettingsPrimitives";
-import type { MockDuplicateSettings } from "@/mocks/settings";
+import type { DuplicateSettings } from "@/types";
 
 interface DuplicateSettingsProps {
-  settings: MockDuplicateSettings;
-  onChange: (partial: Partial<MockDuplicateSettings>) => void;
+  settings: DuplicateSettings;
+  onChange: (partial: Partial<DuplicateSettings>) => void;
   loading?: boolean;
   error?: string | null;
 }
@@ -26,7 +26,7 @@ export function DuplicateSettings({ settings, onChange, loading, error }: Duplic
           { value: "tiered", label: "Tiered (Size → Partial → Full)" },
           { value: "full", label: "Full Hash (All files)" },
         ]}
-        onChange={(v) => onChange({ hash_strategy: v as MockDuplicateSettings["hash_strategy"] })}
+        onChange={(v) => onChange({ hash_strategy: v as DuplicateSettings["hash_strategy"] })}
       />
       <SettingsNumberInput
         label="Minimum Group Size"

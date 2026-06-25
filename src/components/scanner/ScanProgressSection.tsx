@@ -3,10 +3,10 @@ import { Spinner } from "@/components/ui/Spinner";
 import { FileSearch, Clock, Gauge, AlertTriangle, FolderTree } from "lucide-react";
 import { formatCount, formatDuration } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockScanProgress } from "@/mocks/scanner";
+import type { ScanProgress } from "@/types";
 
 interface ScanProgressSectionProps {
-  progress: MockScanProgress | null;
+  progress: ScanProgress | null;
   loading?: boolean;
 }
 

@@ -2,10 +2,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { CheckCircle2, Hash, FolderOpen, ChevronDown, ChevronRight, HardDrive, AlertTriangle } from "lucide-react";
 import { formatBytes } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockDuplicateGroup } from "@/mocks/duplicates";
+import type { DuplicateGroup } from "@/types";
 
 interface DuplicateGroupListProps {
-  groups: MockDuplicateGroup[];
+  groups: DuplicateGroup[];
   selectedGroupId: string | null;
   selectedFileIds: Set<string>;
   onSelectGroup: (id: string | null) => void;

@@ -2,10 +2,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Trash2, PiggyBank, ShieldCheck, ShieldAlert, ShieldX, FileText } from "lucide-react";
 import { formatBytes } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockCleanupPreview } from "@/mocks/cache";
+import type { CleanupPreview } from "@/types";
 
 interface CacheCleanupPreviewProps {
-  preview: MockCleanupPreview | null;
+  preview: CleanupPreview | null;
   loading?: boolean;
 }
 

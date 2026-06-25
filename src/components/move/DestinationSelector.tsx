@@ -2,29 +2,33 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { FolderOpen, History, Star, MapPin, X } from "lucide-react";
 import { clsx } from "clsx";
-import type { MockSuggestedLocation, MockRecentDestination } from "@/mocks/move";
+import type { SuggestedLocation, RecentDestination } from "@/types";
 
 interface DestinationSelectorProps {
   destination: string;
   destinationError: string | null;
-  suggestedLocations: MockSuggestedLocation[];
-  recentDestinations: MockRecentDestination[];
+  suggestedLocations: SuggestedLocation[];
+  recentDestinations: RecentDestination[];
   onDestinationChange: (path: string) => void;
   onBrowse: () => void;
   onClear: () => void;
   loading?: boolean;
 }
 
-const typeIcons = {
+const typeIcons: Record<string, typeof Star> = {
   frequent: Star,
   recent: History,
   smart: MapPin,
+  volume: FolderOpen,
+  folder: FolderOpen,
 };
 
-const typeLabels = {
+const typeLabels: Record<string, string> = {
   frequent: "Frequent",
   recent: "Recent",
   smart: "Smart",
+  volume: "Volume",
+  folder: "Folder",
 };
 
 export function DestinationSelector({

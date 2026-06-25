@@ -3,10 +3,10 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { clsx } from "clsx";
 import { Copy, Trash2, File } from "lucide-react";
 import { formatBytes } from "@/types/format";
-import type { MockPotentialSavings } from "@/mocks/health";
+import type { PotentialSavings } from "@/types";
 
 interface PotentialSavingsProps {
-  savings: MockPotentialSavings | null;
+  savings: PotentialSavings | null;
   loading?: boolean;
 }
 

@@ -1,10 +1,10 @@
 import { Globe } from "lucide-react";
 import { SettingsSectionCard, SettingsSelect } from "./SettingsPrimitives";
-import type { MockGeneralSettings } from "@/mocks/settings";
+import type { GeneralSettings } from "@/types";
 
 interface GeneralSettingsProps {
-  settings: MockGeneralSettings;
-  onChange: (partial: Partial<MockGeneralSettings>) => void;
+  settings: GeneralSettings;
+  onChange: (partial: Partial<GeneralSettings>) => void;
   loading?: boolean;
   error?: string | null;
 }
@@ -39,7 +39,7 @@ export function GeneralSettings({ settings, onChange, loading, error }: GeneralS
           { value: "dark", label: "Dark" },
           { value: "system", label: "System" },
         ]}
-        onChange={(v) => onChange({ theme: v as MockGeneralSettings["theme"] })}
+        onChange={(v) => onChange({ theme: v as GeneralSettings["theme"] })}
       />
       <SettingsSelect
         label="Startup Behavior"
@@ -51,7 +51,7 @@ export function GeneralSettings({ settings, onChange, loading, error }: GeneralS
           { value: "open_dashboard", label: "Open Dashboard" },
           { value: "stay_idle", label: "Stay Idle" },
         ]}
-        onChange={(v) => onChange({ startup_behavior: v as MockGeneralSettings["startup_behavior"] })}
+        onChange={(v) => onChange({ startup_behavior: v as GeneralSettings["startup_behavior"] })}
       />
     </SettingsSectionCard>
   );

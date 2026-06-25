@@ -2,18 +2,22 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Copy, ArrowRightFromLine, Trash2, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { clsx } from "clsx";
-import type { MockMoveOperation, MockResolution, MockConflictStatus } from "@/mocks/move";
+import type { MoveOperation, Resolution, ConflictStatus } from "@/types";
 
 interface ConflictResolutionProps {
-  operations: MockMoveOperation[];
-  onSetResolution: (operationId: string, resolution: MockResolution) => void;
-  onSetAllResolutions: (resolution: MockResolution) => void;
+  operations: MoveOperation[];
+  onSetResolution: (operationId: string, resolution: Resolution) => void;
+  onSetAllResolutions: (resolution: Resolution) => void;
   loading?: boolean;
 }
 
-const conflictLabels: Record<MockConflictStatus, string> = {
+const conflictLabels: Record<ConflictStatus, string> = {
   none: "No conflict",
   exists: "File already exists",
+  same_file: "Same file",
+  permission_denied: "Permission denied",
+  insufficient_space: "Insufficient space",
+  invalid_path: "Invalid path",
   rename_needed: "Name collision - rename recommended",
 };
 

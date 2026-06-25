@@ -1,10 +1,10 @@
 import { HeartPulse } from "lucide-react";
 import { SettingsSectionCard, SettingsSelect, SettingsNumberInput, SettingsToggle } from "./SettingsPrimitives";
-import type { MockHealthScoreSettings } from "@/mocks/settings";
+import type { HealthScoreSettings } from "@/types";
 
 interface HealthScoreSettingsProps {
-  settings: MockHealthScoreSettings;
-  onChange: (partial: Partial<MockHealthScoreSettings>) => void;
+  settings: HealthScoreSettings;
+  onChange: (partial: Partial<HealthScoreSettings>) => void;
   loading?: boolean;
   error?: string | null;
 }
@@ -27,7 +27,7 @@ export function HealthScoreSettings({ settings, onChange, loading, error }: Heal
           { value: "medium", label: "Medium (Balanced)" },
           { value: "high", label: "High (Strict)" },
         ]}
-        onChange={(v) => onChange({ scoring_sensitivity: v as MockHealthScoreSettings["scoring_sensitivity"] })}
+        onChange={(v) => onChange({ scoring_sensitivity: v as HealthScoreSettings["scoring_sensitivity"] })}
       />
       <SettingsToggle
         label="Show Anomalies"

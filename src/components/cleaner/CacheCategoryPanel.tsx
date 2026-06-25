@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Globe, Code2, FileClock, Package, AppWindow, ShieldCheck, ShieldAlert, ShieldX, HardDrive } from "lucide-react";
 import { formatBytes } from "@/types/format";
 import { clsx } from "clsx";
-import type { MockCacheCategory } from "@/mocks/cache";
+import type { CacheCategory } from "@/types";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Globe,
@@ -25,7 +25,7 @@ const riskIcons = {
 };
 
 interface CacheCategoryPanelProps {
-  categories: MockCacheCategory[];
+  categories: CacheCategory[];
   selectedCategoryId: string | null;
   onSelectCategory: (id: string | null) => void;
   loading?: boolean;

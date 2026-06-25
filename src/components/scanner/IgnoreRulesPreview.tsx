@@ -1,10 +1,10 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { FilterX, Plus, ToggleLeft, ToggleRight } from "lucide-react";
 import { clsx } from "clsx";
-import type { MockIgnoreRule } from "@/mocks/scanner";
+import type { IgnoreRule } from "@/types";
 
 interface IgnoreRulesPreviewProps {
-  rules: MockIgnoreRule[];
+  rules: IgnoreRule[];
   onToggle: (id: string) => void;
   onAddRule?: () => void;
   loading?: boolean;

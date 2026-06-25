@@ -1,20 +1,20 @@
 import { Search, X, SlidersHorizontal } from "lucide-react";
-import type { MockFilterState, MockSortConfig } from "@/mocks/duplicates";
+import type { DuplicateFilterState, DuplicateSortConfig } from "@/types";
 
 interface SearchAndFilterProps {
-  filter: MockFilterState;
-  onFilterChange: (filter: Partial<MockFilterState>) => void;
-  sortConfig: MockSortConfig;
-  onSortChange: (field: MockSortConfig["field"]) => void;
+  filter: DuplicateFilterState;
+  onFilterChange: (filter: Partial<DuplicateFilterState>) => void;
+  sortConfig: DuplicateSortConfig;
+  onSortChange: (field: DuplicateSortConfig["field"]) => void;
   onSortDirectionToggle: () => void;
   loading?: boolean;
 }
 
-const sortOptions: { field: MockSortConfig["field"]; label: string }[] = [
-  { field: "total_wasted_bytes", label: "Savings" },
-  { field: "file_size", label: "Size" },
-  { field: "file_count", label: "Count" },
-  { field: "extension", label: "Extension" },
+const sortOptions: { field: DuplicateSortConfig["field"]; label: string }[] = [
+  { field: "wasted", label: "Savings" },
+  { field: "size", label: "Size" },
+  { field: "count", label: "Count" },
+  { field: "name", label: "Name" },
 ];
 
 export function SearchAndFilter({
@@ -75,7 +75,7 @@ export function SearchAndFilter({
         <SlidersHorizontal className="h-4 w-4 text-zinc-400" />
         <select
           value={sortConfig.field}
-          onChange={(e) => onSortChange(e.target.value as MockSortConfig["field"])}
+          onChange={(e) => onSortChange(e.target.value as DuplicateSortConfig["field"])}
           className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
         >
           {sortOptions.map((opt) => (

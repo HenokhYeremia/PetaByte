@@ -1,10 +1,10 @@
 import { Settings } from "lucide-react";
 import { SettingsSectionCard, SettingsSelect, SettingsNumberInput, SettingsToggle, SettingsTextInput } from "./SettingsPrimitives";
-import type { MockAppSettings } from "@/mocks/settings";
+import type { AppSettings } from "@/types";
 
 interface AppSettingsProps {
-  settings: MockAppSettings;
-  onChange: (partial: Partial<MockAppSettings>) => void;
+  settings: AppSettings;
+  onChange: (partial: Partial<AppSettings>) => void;
   onExport?: () => void;
   onImport?: () => void;
   loading?: boolean;
@@ -30,7 +30,7 @@ export function AppSettings({ settings, onChange, onExport, onImport, loading, e
           { value: "warn", label: "Warning" },
           { value: "error", label: "Error" },
         ]}
-        onChange={(v) => onChange({ log_level: v as MockAppSettings["log_level"] })}
+        onChange={(v) => onChange({ log_level: v as AppSettings["log_level"] })}
       />
       <SettingsNumberInput
         label="Log Retention"

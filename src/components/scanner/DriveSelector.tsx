@@ -2,16 +2,16 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Disc, HardDrive } from "lucide-react";
 import { clsx } from "clsx";
 import { formatBytes } from "@/types/format";
-import type { MockDrive } from "@/mocks/scanner";
+import type { Drive } from "@/types";
 
 interface DriveSelectorProps {
-  drives: MockDrive[];
+  drives: Drive[];
   selected: string | null;
   onSelect: (mountPoint: string) => void;
   loading?: boolean;
 }
 
-function DriveCard({ drive, selected, onSelect }: { drive: MockDrive; selected: boolean; onSelect: () => void }) {
+function DriveCard({ drive, selected, onSelect }: { drive: Drive; selected: boolean; onSelect: () => void }) {
   const usedPct = ((drive.total_bytes - drive.free_bytes) / drive.total_bytes) * 100;
   const barColor = usedPct >= 90 ? "bg-red-500" : usedPct >= 75 ? "bg-amber-500" : "bg-emerald-500";
 
