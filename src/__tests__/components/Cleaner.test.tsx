@@ -7,11 +7,72 @@ import { CacheSearchFilter } from "@/components/cleaner/CacheSearchFilter";
 import { CacheDetailsTable } from "@/components/cleaner/CacheDetailsTable";
 import { CacheCleanupPreview } from "@/components/cleaner/CacheCleanupPreview";
 import { CacheActions } from "@/components/cleaner/CacheActions";
-import {
-  mockCategories,
-  defaultCacheFilter,
-} from "@/mocks/cache";
-import type { MockCacheStatus } from "@/mocks/cache";
+import type { CacheCategory, CacheFilter, CacheStatus } from "@/types";
+
+const mockCategories: CacheCategory[] = [
+  {
+    id: "browser",
+    name: "browser",
+    display_name: "Browser Cache",
+    icon: "Globe",
+    risk_level: "safe",
+    total_size: 500_000_000,
+    file_count: 12,
+    entries: [
+      { id: "b1", path: "C:\\Users\\Lenovo\\AppData\\Local\\Google\\Chrome\\Cache\\cache_001.bin", name: "cache_001.bin", size: 45_000_000, matched_rule: "chrome-cache", category_id: "browser", safety_status: "safe", selected: false },
+      { id: "b2", path: "C:\\Users\\Lenovo\\AppData\\Local\\Google\\Chrome\\Cache\\cache_002.bin", name: "cache_002.bin", size: 32_000_000, matched_rule: "chrome-cache", category_id: "browser", safety_status: "safe", selected: false },
+    ],
+  },
+  {
+    id: "developer",
+    name: "developer",
+    display_name: "Developer Cache",
+    icon: "Code2",
+    risk_level: "safe",
+    total_size: 1_200_000_000,
+    file_count: 8,
+    entries: [
+      { id: "d1", path: "D:\\Projects\\app\\node_modules", name: "node_modules", size: 520_000_000, matched_rule: "node-modules", category_id: "developer", safety_status: "safe", selected: false },
+      { id: "d2", path: "D:\\Projects\\app\\.next\\cache", name: "next-cache", size: 180_000_000, matched_rule: "next-cache", category_id: "developer", safety_status: "safe", selected: false },
+    ],
+  },
+  {
+    id: "temporary",
+    name: "temporary",
+    display_name: "Temporary Files",
+    icon: "FileClock",
+    risk_level: "safe",
+    total_size: 300_000_000,
+    file_count: 15,
+    entries: [],
+  },
+  {
+    id: "package_manager",
+    name: "package_manager",
+    display_name: "Package Manager Cache",
+    icon: "Package",
+    risk_level: "moderate",
+    total_size: 80_000_000,
+    file_count: 5,
+    entries: [],
+  },
+  {
+    id: "application",
+    name: "application",
+    display_name: "Application Cache",
+    icon: "AppWindow",
+    risk_level: "safe",
+    total_size: 20_000_000,
+    file_count: 3,
+    entries: [],
+  },
+];
+
+const defaultCacheFilter: CacheFilter = {
+  search: "",
+  categoryFilter: "all",
+  safetyFilter: "all",
+};
 
 describe("CacheSummarySection", () => {
   const props = {
@@ -261,7 +322,7 @@ describe("CacheCleanupPreview", () => {
 
 describe("CacheActions", () => {
   const defaultProps = {
-    status: "idle" as MockCacheStatus,
+    status: "idle" as CacheStatus,
     hasSelection: false,
     onAnalyze: vi.fn(),
     onPreview: vi.fn(),

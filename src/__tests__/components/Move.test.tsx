@@ -7,16 +7,56 @@ import { MovePreviewSection } from "@/components/move/MovePreviewSection";
 import { ConflictResolution } from "@/components/move/ConflictResolution";
 import { MoveExecutionPanel } from "@/components/move/MoveExecutionPanel";
 import { UndoCenterPreview } from "@/components/move/UndoCenterPreview";
-import {
-  mockMoveOperations,
-  mockMoveProgress,
-  mockUndoJournal,
-  mockSuggestedLocations,
-  mockRecentDestinations,
-  defaultFilterState,
-} from "@/mocks/move";
-import type { MockMoveOperation } from "@/mocks/move";
-import type { MoveStatus } from "@/stores/moveStore";
+import type { MoveOperation, MoveProgress, UndoJournalEntry, SuggestedLocation, RecentDestination, MoveFilterState } from "@/types";
+
+type MoveStatus = "idle" | "previewing" | "ready" | "moving" | "paused" | "completed" | "cancelled" | "failed";
+
+const mockMoveOperations: MoveOperation[] = [
+  { id: "op-1", source: "D:\\Downloads\\project-backup-2026-06.zip", destination: "D:\\Archive\\project-backup-2026-06.zip", size: 250_000_000, method: "rename", conflict_status: "exists", validation_status: "valid", resolution: "keep_both", source_name: "project-backup-2026-06.zip", dest_name: "project-backup-2026-06 (copy).zip" },
+  { id: "op-2", source: "D:\\Downloads\\demo-recording-2026.mp4", destination: "D:\\Archive\\demo-recording-2026.mp4", size: 1_200_000_000, method: "rename", conflict_status: "none", validation_status: "valid", resolution: "rename", source_name: "demo-recording-2026.mp4", dest_name: "demo-recording-2026.mp4" },
+  { id: "op-3", source: "D:\\Downloads\\old-screenshots", destination: "D:\\Archive\\old-screenshots", size: 450_000_000, method: "copy_delete", conflict_status: "exists", validation_status: "valid", resolution: "keep_both", source_name: "old-screenshots", dest_name: "old-screenshots" },
+  { id: "op-4", source: "D:\\Downloads\\node_modules_backup", destination: "D:\\Archive\\node_modules_backup", size: 520_000_000, method: "rename", conflict_status: "none", validation_status: "valid", resolution: "rename", source_name: "node_modules_backup", dest_name: "node_modules_backup" },
+  { id: "op-5", source: "D:\\Downloads\\config-backup.json", destination: "D:\\Archive\\config-backup.json", size: 1_200_000, method: "rename", conflict_status: "none", validation_status: "valid", resolution: "rename", source_name: "config-backup.json", dest_name: "config-backup.json" },
+];
+
+const mockMoveProgress: MoveProgress = {
+  current_file: "D:\\Downloads\\project-backup-2026-06.zip",
+  bytes_copied: 500_000_000,
+  total_bytes: 2_421_200_000,
+  files_completed: 2,
+  total_files: 5,
+  phase: "moving",
+  percentage: 20.6,
+  moved_files: 2,
+  moved_bytes: 500_000_000,
+  elapsed_secs: 14,
+  eta_secs: 72,
+};
+
+const mockUndoJournal: UndoJournalEntry[] = [
+  { id: "undo-1", operation_type: "move", source_path: "D:\\Downloads\\project-backup-2026-06.zip", destination_path: "D:\\Archive\\project-backup-2026-06.zip", size: 250_000_000, status: "available", timestamp: "2026-06-15T17:30:00.000Z", checksum_before: "abc123", checksum_after: "abc123", started_at: "2026-06-15T17:30:00.000Z", source_root: "D:\\Downloads", dest_root: "D:\\Archive", operation_count: 5, total_bytes: 2_421_200_000, journal_path: "C:\\Users\\Lenovo\\.petabyte\\journal\\undo-1.json" },
+  { id: "undo-2", operation_type: "move", source_path: "D:\\Media\\Videos\\demo-recording-2026.mp4", destination_path: "D:\\Media\\Organized\\demo-recording-2026.mp4", size: 1_200_000_000, status: "available", timestamp: "2026-06-14T10:00:00.000Z", checksum_before: "def456", checksum_after: "def456", started_at: "2026-06-14T10:00:00.000Z", source_root: "D:\\Media\\Videos", dest_root: "D:\\Media\\Organized", operation_count: 3, total_bytes: 2_100_000_000, journal_path: "C:\\Users\\Lenovo\\.petabyte\\journal\\undo-2.json" },
+  { id: "undo-3", operation_type: "move", source_path: "C:\\Users\\Lenovo\\Desktop\\old-resume.docx", destination_path: "D:\\Archive\\resumes\\old-resume.docx", size: 500_000, status: "used", timestamp: "2026-06-10T08:00:00.000Z", checksum_before: "ghi789", checksum_after: "ghi789", started_at: "2026-06-10T08:00:00.000Z", source_root: "C:\\Users\\Lenovo\\Desktop", dest_root: "D:\\Archive\\resumes", operation_count: 1, total_bytes: 500_000, journal_path: "C:\\Users\\Lenovo\\.petabyte\\journal\\undo-3.json" },
+  { id: "undo-4", operation_type: "move", source_path: "D:\\Downloads\\archived-project.zip", destination_path: "E:\\ColdStorage\\archived-project.zip", size: 5_000_000_000, status: "expired", timestamp: "2026-05-01T12:00:00.000Z", checksum_before: "jkl012", checksum_after: "jkl012", started_at: "2026-05-01T12:00:00.000Z", source_root: "D:\\Downloads", dest_root: "E:\\ColdStorage", operation_count: 1, total_bytes: 5_000_000_000, journal_path: "C:\\Users\\Lenovo\\.petabyte\\journal\\undo-4.json" },
+];
+
+const mockSuggestedLocations: SuggestedLocation[] = [
+  { id: "loc-1", path: "D:\\Archive", label: "Archive Folder", free_space: 400_000_000_000, type: "folder" },
+  { id: "loc-2", path: "D:\\Media\\Organized", label: "Organized Videos", free_space: 300_000_000_000, type: "smart" },
+  { id: "loc-3", path: "E:\\Backup", label: "Backup Drive", free_space: 1_500_000_000_000, type: "volume" },
+];
+
+const mockRecentDestinations: RecentDestination[] = [
+  { id: "rd-1", path: "D:\\Archive\\Projects", label: "D:\\Archive\\Projects", last_used: "2026-06-15T17:30:00.000Z", count: 5, move_count: 5 },
+  { id: "rd-2", path: "D:\\Media\\Organized", label: "D:\\Media\\Organized", last_used: "2026-06-14T10:00:00.000Z", count: 3, move_count: 3 },
+];
+
+const defaultFilterState: MoveFilterState = {
+  search: "",
+  statusFilter: "all",
+  conflictFilter: "all",
+  validationFilter: "all",
+};
 
 describe("MoveSummarySection", () => {
   const defaultProps = { selectedFiles: 5, totalSize: 4_046_000_000, estimatedSavings: 3_439_100_000 };
@@ -157,7 +197,7 @@ describe("MovePreviewSection", () => {
     render(
       <MovePreviewSection
         {...defaultProps}
-        filter={{ search: "demo", conflictFilter: "all", validationFilter: "all" }}
+        filter={{ search: "demo", statusFilter: "all", conflictFilter: "all", validationFilter: "all" }}
       />,
     );
     expect(screen.getByText(/1 of 5 operations/)).toBeInTheDocument();
@@ -168,7 +208,7 @@ describe("MovePreviewSection", () => {
     render(
       <MovePreviewSection
         {...defaultProps}
-        filter={{ search: "", conflictFilter: "exists", validationFilter: "all" }}
+        filter={{ search: "", statusFilter: "all", conflictFilter: "exists", validationFilter: "all" }}
       />,
     );
     expect(screen.getAllByText("project-backup-2026-06 (copy).zip").length).toBeGreaterThanOrEqual(1);
@@ -214,12 +254,12 @@ describe("ConflictResolution", () => {
 
   it("renders conflict count", () => {
     render(<ConflictResolution {...defaultProps} />);
-    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
   });
 
   it("renders conflict card for each conflict", () => {
     render(<ConflictResolution {...defaultProps} />);
-    expect(screen.getByText("project-backup-2026-06 (copy).zip")).toBeInTheDocument();
+    expect(screen.getByText("project-backup-2026-06.zip")).toBeInTheDocument();
     expect(screen.getByText("old-screenshots")).toBeInTheDocument();
   });
 
@@ -260,10 +300,10 @@ describe("ConflictResolution", () => {
   });
 
   it("renders empty state when no conflicts", () => {
-    const noConflicts: MockMoveOperation[] = mockMoveOperations.map((op) => ({
+    const noConflicts: MoveOperation[] = mockMoveOperations.map((op) => ({
       ...op,
-      conflict_status: "none" as const,
-      validation_status: "valid" as const,
+      conflict_status: "none" as MoveOperation["conflict_status"],
+      validation_status: "valid" as MoveOperation["validation_status"],
     }));
     render(<ConflictResolution {...defaultProps} operations={noConflicts} />);
     expect(screen.getByText("No conflicts detected")).toBeInTheDocument();
@@ -364,7 +404,7 @@ describe("MoveExecutionPanel", () => {
       <MoveExecutionPanel
         {...defaultProps}
         status="paused"
-        progress={{ ...mockMoveProgress, status: "paused" }}
+        progress={{ ...mockMoveProgress, phase: "paused" }}
       />,
     );
     expect(screen.getByText("Resume")).toBeInTheDocument();
@@ -376,7 +416,7 @@ describe("MoveExecutionPanel", () => {
       <MoveExecutionPanel
         {...defaultProps}
         status="paused"
-        progress={{ ...mockMoveProgress, status: "paused" }}
+        progress={{ ...mockMoveProgress, phase: "paused" }}
       />,
     );
     expect(screen.getByText("Paused")).toBeInTheDocument();
@@ -387,7 +427,7 @@ describe("MoveExecutionPanel", () => {
       <MoveExecutionPanel
         {...defaultProps}
         status="completed"
-        progress={{ ...mockMoveProgress, status: "completed" }}
+        progress={{ ...mockMoveProgress, phase: "completed" }}
       />,
     );
     expect(screen.getByText("Start New")).toBeInTheDocument();
@@ -398,7 +438,7 @@ describe("MoveExecutionPanel", () => {
       <MoveExecutionPanel
         {...defaultProps}
         status="completed"
-        progress={{ ...mockMoveProgress, status: "completed" }}
+        progress={{ ...mockMoveProgress, phase: "completed" }}
       />,
     );
     expect(screen.getByText("Completed")).toBeInTheDocument();
@@ -463,7 +503,7 @@ describe("MoveExecutionPanel", () => {
       <MoveExecutionPanel
         {...defaultProps}
         status="paused"
-        progress={{ ...mockMoveProgress, status: "paused" }}
+        progress={{ ...mockMoveProgress, phase: "paused" }}
         onResume={onResume}
       />,
     );

@@ -9,14 +9,77 @@ import { ScanControlPanel } from "@/components/scanner/ScanControlPanel";
 import { ScanProgressSection } from "@/components/scanner/ScanProgressSection";
 import { ScanResultSummary } from "@/components/scanner/ScanResultSummary";
 import { RecentScanHistory } from "@/components/scanner/RecentScanHistory";
-import {
-  mockDrives,
-  mockIgnoreRules,
-  defaultScanConfig,
-  mockScanProgress,
-  mockScanResult,
-  mockScanHistory,
-} from "@/mocks/scanner";
+import type { Drive, IgnoreRule, ScanConfig, ScanProgress, ScanResult, HistoryItem } from "@/types";
+
+const mockDrives: Drive[] = [
+  { letter: "C", mount_point: "C:\\", label: "Windows", total_bytes: 500_000_000_000, free_bytes: 150_000_000_000, is_removable: false, file_system: "NTFS" },
+  { letter: "D", mount_point: "D:\\", label: "Data", total_bytes: 1_000_000_000_000, free_bytes: 600_000_000_000, is_removable: false, file_system: "NTFS" },
+  { letter: "E", mount_point: "E:\\", label: "Backup", total_bytes: 2_000_000_000_000, free_bytes: 1_500_000_000_000, is_removable: false, file_system: "exFAT" },
+];
+
+const mockIgnoreRules: IgnoreRule[] = [
+  { id: "rule-1", pattern: "**/node_modules/**", label: "Node modules", enabled: true, is_system: true, description: "Node.js dependencies", builtin: true },
+  { id: "rule-2", pattern: "**/.git/**", label: "Git directory", enabled: true, is_system: true, description: "Git version control", builtin: true },
+  { id: "rule-3", pattern: "**/target/**", label: "Rust build", enabled: true, is_system: true, description: "Rust build output", builtin: true },
+  { id: "rule-4", pattern: "**/.next/**", label: "Next.js build", enabled: true, is_system: true, description: "Next.js build output", builtin: true },
+  { id: "rule-5", pattern: "**/__pycache__/**", label: "Python cache", enabled: true, is_system: true, description: "Python bytecode cache", builtin: true },
+  { id: "rule-6", pattern: "**/*.pyc", label: "Python bytecode", enabled: true, is_system: true, description: "Compiled Python files", builtin: true },
+  { id: "rule-7", pattern: "**/.DS_Store", label: "macOS metadata", enabled: true, is_system: true, description: "macOS folder metadata", builtin: true },
+  { id: "rule-8", pattern: "**/Thumbs.db", label: "Windows thumbnails", enabled: true, is_system: true, description: "Windows thumbnail cache", builtin: true },
+  { id: "rule-9", pattern: "**/.vscode/**", label: "VS Code settings", enabled: true, is_system: true, description: "VS Code workspace config", builtin: true },
+  { id: "rule-10", pattern: "**/build/**", label: "Build output", enabled: false, is_system: false, description: "Custom build directory", builtin: false },
+];
+
+const defaultScanConfig: ScanConfig = {
+  recursive: true,
+  follow_symlinks: false,
+  thread_count: 4,
+  max_depth: null,
+  min_file_size: null,
+  max_file_size: null,
+  exclude_system_dirs: true,
+};
+
+const mockScanProgress: ScanProgress = {
+  session_id: "sess-1",
+  scanned_files: 84_700,
+  total_files: 284_700,
+  scanned_size: 120_000_000_000,
+  total_size: 480_000_000_000,
+  current_path: "C:\\Projects\\app\\node_modules\\lodash\\dist",
+  elapsed_secs: 42,
+  eta_secs: 98,
+  status: "scanning",
+  total_directories: 6_200,
+  speed_files_per_sec: 3_500,
+  errors: 5,
+};
+
+const mockScanResult: ScanResult = {
+  id: "result-1",
+  volume_id: "volume-1",
+  status: "completed",
+  total_files: 284_700,
+  total_dirs: 18_200,
+  total_size: 480_000_000_000,
+  scanned_files: 284_700,
+  scanned_size: 480_000_000_000,
+  errors_count: 12,
+  duration_secs: 154,
+  started_at: "2026-06-15T17:27:26.000Z",
+  completed_at: "2026-06-15T17:30:00.000Z",
+  path: "D:\\Projects",
+  total_directories: 18_200,
+  errors: 12,
+};
+
+const mockScanHistory: HistoryItem[] = [
+  { id: "hist-001", path: "D:\\Projects", total_files: 284_700, total_size: 480_000_000_000, status: "completed", started_at: "2026-06-15T17:27:26.000Z", completed_at: "2026-06-15T17:30:00.000Z", total_directories: 18_200, duration_secs: 154 },
+  { id: "hist-002", path: "C:\\Users\\Lenovo\\Downloads", total_files: 12_500, total_size: 85_000_000_000, status: "completed", started_at: "2026-06-14T10:00:00.000Z", completed_at: "2026-06-14T10:05:00.000Z", total_directories: 850, duration_secs: 300 },
+  { id: "hist-003", path: "D:\\Media\\Videos", total_files: 450, total_size: 250_000_000_000, status: "cancelled", started_at: "2026-06-13T15:00:00.000Z", completed_at: "2026-06-13T15:02:00.000Z", total_directories: 25, duration_secs: 120 },
+  { id: "hist-004", path: "E:\\Backup\\old-projects", total_files: 180_000, total_size: 350_000_000_000, status: "failed", started_at: "2026-06-12T08:00:00.000Z", completed_at: "2026-06-12T08:01:00.000Z", total_directories: 9_500, duration_secs: 60 },
+  { id: "hist-005", path: "C:\\Program Files", total_files: 95_000, total_size: 12_000_000_000, status: "completed", started_at: "2026-06-11T12:00:00.000Z", completed_at: "2026-06-11T12:15:00.000Z", total_directories: 4_200, duration_secs: 900 },
+];
 
 describe("DriveSelector", () => {
   it("renders drives", () => {
@@ -289,12 +352,12 @@ describe("ScanResultSummary", () => {
   });
 
   it("shows cancelled status", () => {
-    render(<ScanResultSummary result={{ ...mockScanResult, status: "cancelled" }} />);
+    render(<ScanResultSummary result={{ ...mockScanResult, status: "cancelled", completed_at: "2026-06-15T17:28:00.000Z" }} />);
     expect(screen.getByText("Cancelled")).toBeInTheDocument();
   });
 
   it("shows failed status", () => {
-    render(<ScanResultSummary result={{ ...mockScanResult, status: "failed" }} />);
+    render(<ScanResultSummary result={{ ...mockScanResult, status: "failed", completed_at: "2026-06-15T17:28:00.000Z" }} />);
     expect(screen.getByText("Failed")).toBeInTheDocument();
   });
 

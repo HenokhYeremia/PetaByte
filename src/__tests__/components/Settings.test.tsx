@@ -9,15 +9,15 @@ import { CacheCleanerSettings } from "@/components/settings/CacheCleanerSettings
 import { HealthScoreSettings } from "@/components/settings/HealthScoreSettings";
 import { AppSettings } from "@/components/settings/AppSettings";
 import { SettingsSectionCard, SettingsToggle, SettingsSelect, SettingsTextInput, SettingsNumberInput, SettingsTextListInput } from "@/components/settings/SettingsPrimitives";
-import {
-  defaultGeneralSettings,
-  defaultScannerSettings,
-  defaultDuplicateSettings,
-  defaultMoveSettings,
-  defaultCacheCleanerSettings,
-  defaultHealthScoreSettings,
-  defaultAppSettings,
-} from "@/mocks/settings";
+import type { GeneralSettings as GeneralSettingsType, ScannerSettings as ScannerSettingsType, DuplicateSettings as DuplicateSettingsType, MoveSettings as MoveSettingsType, CacheCleanerSettings as CacheCleanerSettingsType, HealthScoreSettings as HealthScoreSettingsType, AppSettings as AppSettingsType } from "@/types";
+
+const defaultGeneralSettings: GeneralSettingsType = { language: "en", theme: "system", startup_behavior: "remember_last" };
+const defaultScannerSettings: ScannerSettingsType = { default_scan_location: "", ignore_rules: [], max_depth: null, follow_symlinks: false, thread_count: 4, min_file_size: null, max_file_size: null };
+const defaultDuplicateSettings: DuplicateSettingsType = { hash_strategy: "tiered", min_group_size: 2, verify_on_move: false, verify_on_delete: false };
+const defaultMoveSettings: MoveSettingsType = { default_destination: "", conflict_strategy: "ask", undo_retention_days: 30 };
+const defaultCacheCleanerSettings: CacheCleanerSettingsType = { enabled_categories: ["browser", "developer", "temporary", "package_manager", "application"], min_safety_level: "safe", dry_run_by_default: true, cleanup_rules_path: "" };
+const defaultHealthScoreSettings: HealthScoreSettingsType = { scoring_sensitivity: "medium", show_anomalies: true, auto_analyze: true, recommendation_count: 5 };
+const defaultAppSettings: AppSettingsType = { log_level: "info", log_retention_days: 30, enable_diagnostics: true, auto_export: false, settings_file_path: "" };
 
 describe("SettingsPrimitives", () => {
   describe("SettingsToggle", () => {
@@ -268,7 +268,7 @@ describe("CacheCleanerSettings", () => {
     const browserBtn = screen.getByRole("button", { name: /Browser Cache/ });
     await userEvent.click(browserBtn);
     expect(onChange).toHaveBeenCalledWith({
-      enabled_categories: ["developer", "temporary", "package_manager"],
+      enabled_categories: ["developer", "temporary", "package_manager", "application"],
     });
   });
 
