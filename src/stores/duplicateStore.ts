@@ -1,106 +1,75 @@
 import { create } from "zustand";
-import type { MockDuplicateGroup, MockDuplicateSummary, MockFilterState, MockSortConfig } from "@/mocks/duplicates";
-import { defaultFilterState, defaultSortConfig } from "@/mocks/duplicates";
+import type {
+  DuplicateGroup, DuplicateSummary, DuplicateFilterState, DuplicateSortConfig,
+} from "@/types";
+import { fetchDuplicates } from "@/bridge";
 
 interface DuplicateStore {
-  groups: MockDuplicateGroup[];
-  summary: MockDuplicateSummary | null;
+  groups: DuplicateGroup[];
+  summary: DuplicateSummary | null;
   loading: boolean;
-
+  error: string | null;
   selectedGroupId: string | null;
   selectedFileIds: Set<string>;
+  filterState: DuplicateFilterState;
+  sortConfig: DuplicateSortConfig;
 
-  filter: MockFilterState;
-  sortConfig: MockSortConfig;
-
-  setGroups: (groups: MockDuplicateGroup[]) => void;
-  setSummary: (summary: MockDuplicateSummary | null) => void;
+  setGroups: (groups: DuplicateGroup[]) => void;
+  setSummary: (summary: DuplicateSummary | null) => void;
   setLoading: (loading: boolean) => void;
-
-  selectGroup: (id: string | null) => void;
+  setError: (error: string | null) => void;
+  setSelectedGroupId: (id: string | null) => void;
+  setFilterState: (state: Partial<DuplicateFilterState>) => void;
+  setSortConfig: (config: DuplicateSortConfig) => void;
   toggleFile: (groupId: string, fileId: string) => void;
-  toggleGroup: (groupId: string, select: boolean) => void;
-  selectAllFiles: (select: boolean) => void;
-
-  updateFilter: (partial: Partial<MockFilterState>) => void;
-  setSortField: (field: MockSortConfig["field"]) => void;
-  toggleSortDirection: () => void;
-
-  previewMove: () => void;
-  previewDelete: () => void;
-  smartMove: () => void;
-  exportReport: () => void;
+  selectAllGroup: (groupId: string, select: boolean) => void;
+  fetchDuplicatesAction: (sessionId?: string) => Promise<void>;
 }
 
-export const useDuplicateStore = create<DuplicateStore>((set) => ({
+const DEFAULT_SORT_CONFIG: DuplicateSortConfig = { field: "size", direction: "desc" };
+const DEFAULT_FILTER_STATE: DuplicateFilterState = { search: "", folder: "", extensions: [], countMin: null, countMax: null, sizeMin: null, sizeMax: null, extensionFilter: "all", sortConfig: DEFAULT_SORT_CONFIG };
+
+export const useDuplicateStore = create<DuplicateStore>((set, get) => ({
   groups: [],
   summary: null,
   loading: false,
-
+  error: null,
   selectedGroupId: null,
-  selectedFileIds: new Set<string>(),
+  selectedFileIds: new Set(),
+  filterState: DEFAULT_FILTER_STATE,
+  sortConfig: DEFAULT_SORT_CONFIG,
 
-  filter: defaultFilterState,
-  sortConfig: defaultSortConfig,
-
-  setGroups: (groups) => set({ groups, loading: false }),
+  setGroups: (groups) => set({ groups }),
   setSummary: (summary) => set({ summary }),
   setLoading: (loading) => set({ loading }),
+  setError: (error) => set({ error }),
+  setSelectedGroupId: (id) => set({ selectedGroupId: id }),
+  setFilterState: (state) => set((s) => ({ filterState: { ...s.filterState, ...state } })),
+  setSortConfig: (config) => set({ sortConfig: config, filterState: { ...get().filterState, sortConfig: config } }),
 
-  selectGroup: (id) => set({ selectedGroupId: id }),
+  toggleFile: (_groupId, fileId) => set((s) => {
+    const next = new Set(s.selectedFileIds);
+    if (next.has(fileId)) next.delete(fileId); else next.add(fileId);
+    return { selectedFileIds: next };
+  }),
 
-  toggleFile: (_groupId, fileId) =>
-    set((s) => {
-      const next = new Set(s.selectedFileIds);
-      if (next.has(fileId)) {
-        next.delete(fileId);
-      } else {
-        next.add(fileId);
-      }
-      return { selectedFileIds: next };
-    }),
+  selectAllGroup: (groupId, select) => set((s) => {
+    const group = s.groups.find((g) => g.id === groupId);
+    if (!group) return {};
+    const next = new Set(s.selectedFileIds);
+    for (const f of group.files) {
+      if (select) next.add(f.id); else next.delete(f.id);
+    }
+    return { selectedFileIds: next };
+  }),
 
-  toggleGroup: (groupId, select) =>
-    set((s) => {
-      const group = s.groups.find((g) => g.id === groupId);
-      if (!group) return {};
-      const next = new Set(s.selectedFileIds);
-      for (const f of group.files) {
-        if (select) next.add(f.id);
-        else next.delete(f.id);
-      }
-      return { selectedFileIds: next };
-    }),
-
-  selectAllFiles: (select) =>
-    set((s) => {
-      const next = new Set<string>();
-      if (select) {
-        for (const g of s.groups) {
-          for (const f of g.files) {
-            next.add(f.id);
-          }
-        }
-      }
-      return { selectedFileIds: next };
-    }),
-
-  updateFilter: (partial) =>
-    set((s) => ({ filter: { ...s.filter, ...partial } })),
-
-  setSortField: (field) =>
-    set((s) => ({ sortConfig: { field, direction: s.sortConfig.direction } })),
-
-  toggleSortDirection: () =>
-    set((s) => ({
-      sortConfig: {
-        ...s.sortConfig,
-        direction: s.sortConfig.direction === "desc" ? "asc" : "desc",
-      },
-    })),
-
-  previewMove: () => {},
-  previewDelete: () => {},
-  smartMove: () => {},
-  exportReport: () => {},
+  fetchDuplicatesAction: async () => {
+    set({ loading: true, error: null });
+    try {
+      const result = await fetchDuplicates();
+      set({ groups: result.groups, summary: result.summary, loading: false });
+    } catch (err) {
+      set({ loading: false, error: String(err) });
+    }
+  },
 }));

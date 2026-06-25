@@ -1,97 +1,130 @@
 import { create } from "zustand";
-import type {
-  MockMoveItem,
-  MockSuggestedLocation,
-  MockRecentDestination,
-  MockMoveOperation,
-  MockMoveProgress,
-  MockUndoJournalEntry,
-  MockFilterState,
-  MockResolution,
-} from "@/mocks/move";
-import { defaultFilterState } from "@/mocks/move";
+import type { MoveItem, SuggestedLocation, RecentDestination, MoveOperation, MoveProgress, UndoJournalEntry, MoveFilterState, Resolution, MoveResultDto } from "@/types";
+import { moveFileDryRunTauri, moveFileTauri, undoMoveTauri, fetchMoveHistoryTauri } from "@/bridge";
 
-export type MoveStatus = "idle" | "previewing" | "ready" | "moving" | "paused" | "completed" | "cancelled" | "failed";
+function toMoveOperations(results: MoveResultDto[]): MoveOperation[] {
+  return results.map((r) => ({
+    id: r.operation_id,
+    source: r.source_path,
+    destination: r.destination_path,
+    size: r.file_size,
+    method: "rename" as const,
+    conflict_status: (r.error ? "invalid_path" : "none") as MoveOperation["conflict_status"],
+    validation_status: (r.error ? "invalid" : "valid") as MoveOperation["validation_status"],
+    resolution: "rename" as MoveOperation["resolution"],
+    source_name: r.source_path.split("\\").pop() ?? r.source_path,
+    dest_name: r.destination_path.split("\\").pop() ?? r.destination_path,
+  }));
+}
 
 interface MoveStore {
-  selectedItems: MockMoveItem[];
-  destination: string;
-  destinationError: string | null;
-  suggestedLocations: MockSuggestedLocation[];
-  recentDestinations: MockRecentDestination[];
-  operations: MockMoveOperation[];
-  progress: MockMoveProgress | null;
-  status: MoveStatus;
-  filter: MockFilterState;
-  undoJournal: MockUndoJournalEntry[];
-  selectedUndoId: string | null;
+  selectedItems: MoveItem[];
+  suggestedLocations: SuggestedLocation[];
+  recentDestinations: RecentDestination[];
+  operations: MoveOperation[];
+  progress: MoveProgress | null;
+  status: "idle" | "previewing" | "ready" | "moving" | "completed" | "failed";
   loading: boolean;
+  error: string | null;
+  destination: string;
+  undoJournal: UndoJournalEntry[];
+  filterState: MoveFilterState;
 
-  setSelectedItems: (items: MockMoveItem[]) => void;
-  setDestination: (dest: string) => void;
-  setDestinationError: (error: string | null) => void;
-  setOperations: (ops: MockMoveOperation[]) => void;
-  setProgress: (progress: MockMoveProgress | null) => void;
-  setStatus: (status: MoveStatus) => void;
-  updateFilter: (partial: Partial<MockFilterState>) => void;
-  setUndoJournal: (journal: MockUndoJournalEntry[]) => void;
-  setSelectedUndoId: (id: string | null) => void;
+  setSelectedItems: (items: MoveItem[]) => void;
+  setSuggestedLocations: (locations: SuggestedLocation[]) => void;
+  setRecentDestinations: (destinations: RecentDestination[]) => void;
+  setOperations: (operations: MoveOperation[]) => void;
+  setProgress: (progress: MoveProgress | null) => void;
+  setStatus: (status: MoveStore["status"]) => void;
   setLoading: (loading: boolean) => void;
-
-  setResolution: (operationId: string, resolution: MockResolution) => void;
-  setAllResolutions: (resolution: MockResolution) => void;
-  suggestDestination: (path: string) => void;
-  selectRecentDestination: (path: string) => void;
-
-  startMove: () => void;
-  cancelMove: () => void;
-  pauseMove: () => void;
-  resumeMove: () => void;
+  setError: (error: string | null) => void;
+  setDestination: (dest: string) => void;
+  setUndoJournal: (journal: UndoJournalEntry[]) => void;
+  setFilterState: (state: Partial<MoveFilterState>) => void;
+  toggleItem: (id: string) => void;
+  setResolution: (operationId: string, resolution: Resolution) => void;
+  fetchPreviewAction: (srcPaths: string[], dest: string) => Promise<void>;
+  startMoveAction: (srcPaths: string[], dest: string) => Promise<void>;
+  undoMoveAction: (operationId: string) => Promise<void>;
+  fetchUndoJournalAction: () => Promise<void>;
 }
+
+const DEFAULT_FILTER: MoveFilterState = { search: "", statusFilter: "all", conflictFilter: "all", validationFilter: "all" };
 
 export const useMoveStore = create<MoveStore>((set) => ({
   selectedItems: [],
-  destination: "",
-  destinationError: null,
   suggestedLocations: [],
   recentDestinations: [],
   operations: [],
   progress: null,
   status: "idle",
-  filter: defaultFilterState,
-  undoJournal: [],
-  selectedUndoId: null,
   loading: false,
+  error: null,
+  destination: "",
+  undoJournal: [],
+  filterState: DEFAULT_FILTER,
 
   setSelectedItems: (items) => set({ selectedItems: items }),
-  setDestination: (dest) => set({ destination: dest, destinationError: null }),
-  setDestinationError: (error) => set({ destinationError: error }),
-  setOperations: (ops) => set({ operations: ops, loading: false }),
+  setSuggestedLocations: (locations) => set({ suggestedLocations: locations }),
+  setRecentDestinations: (destinations) => set({ recentDestinations: destinations }),
+  setOperations: (operations) => set({ operations }),
   setProgress: (progress) => set({ progress }),
   setStatus: (status) => set({ status }),
-  updateFilter: (partial) => set((s) => ({ filter: { ...s.filter, ...partial } })),
-  setUndoJournal: (journal) => set({ undoJournal: journal }),
-  setSelectedUndoId: (id) => set({ selectedUndoId: id }),
   setLoading: (loading) => set({ loading }),
+  setError: (error) => set({ error }),
+  setDestination: (dest) => set({ destination: dest }),
+  setUndoJournal: (journal) => set({ undoJournal: journal }),
+  setFilterState: (state) => set((s) => ({ filterState: { ...s.filterState, ...state } })),
 
-  setResolution: (operationId, resolution) =>
-    set((s) => ({
-      operations: s.operations.map((op) =>
-        op.id === operationId ? { ...op, resolution } : op,
-      ),
-    })),
+  toggleItem: (id) => set((s) => ({
+    selectedItems: s.selectedItems.map((i) => i.id === id ? { ...i, selected: !i.selected } : i),
+  })),
 
-  setAllResolutions: (resolution) =>
-    set((s) => ({
-      operations: s.operations.map((op) => ({ ...op, resolution })),
-    })),
+  setResolution: (operationId, resolution) => set((s) => ({
+    operations: s.operations.map((o) => o.id === operationId ? { ...o, resolution } : o),
+  })),
 
-  suggestDestination: (path) => set({ destination: path, destinationError: null }),
+  fetchPreviewAction: async (srcPaths, dest) => {
+    set({ loading: true, error: null });
+    try {
+      const results = await Promise.all(
+        srcPaths.map((p) => moveFileDryRunTauri(p, dest, 0)),
+      );
+      set({ operations: toMoveOperations(results), status: "ready", loading: false });
+    } catch (err) {
+      set({ loading: false, error: String(err) });
+    }
+  },
 
-  selectRecentDestination: (path) => set({ destination: path, destinationError: null }),
+  startMoveAction: async (srcPaths, dest) => {
+    set({ status: "moving", error: null });
+    try {
+      const results = await Promise.all(
+        srcPaths.map((p) => moveFileTauri(p, dest, 0, false)),
+      );
+      set({ operations: toMoveOperations(results), status: "completed" });
+    } catch (err) {
+      set({ status: "failed", error: String(err) });
+    }
+  },
 
-  startMove: () => set({ status: "moving" }),
-  cancelMove: () => set({ status: "cancelled" }),
-  pauseMove: () => set({ status: "paused" }),
-  resumeMove: () => set({ status: "moving" }),
+  undoMoveAction: async (operationId) => {
+    set({ loading: true, error: null });
+    try {
+      await undoMoveTauri(operationId);
+      set({ loading: false });
+    } catch (err) {
+      set({ loading: false, error: String(err) });
+    }
+  },
+
+  fetchUndoJournalAction: async () => {
+    set({ loading: true, error: null });
+    try {
+      const journal = await fetchMoveHistoryTauri();
+      set({ undoJournal: journal, loading: false });
+    } catch (err) {
+      set({ loading: false, error: String(err) });
+    }
+  },
 }));

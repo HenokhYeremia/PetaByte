@@ -1,34 +1,27 @@
 import { create } from "zustand";
-import type {
-  MockHealthScore,
-  MockHealthFactor,
-  MockHealthRecommendation,
-  MockPotentialSavings,
-  MockHealthTrend,
-  MockHealthStatus,
-} from "@/mocks/health";
+import type { HealthScore, HealthFactor, HealthRecommendation, PotentialSavings, HealthTrend, HealthStatus } from "@/types";
+import { fetchHealthScore } from "@/bridge";
 
 interface HealthStore {
-  score: MockHealthScore | null;
-  factors: MockHealthFactor[];
-  recommendations: MockHealthRecommendation[];
-  savings: MockPotentialSavings | null;
-  trend: MockHealthTrend | null;
-  status: MockHealthStatus;
+  score: HealthScore | null;
+  factors: HealthFactor[];
+  recommendations: HealthRecommendation[];
+  savings: PotentialSavings | null;
+  trend: HealthTrend | null;
+  status: HealthStatus;
   loading: boolean;
   error: string | null;
 
-  setScore: (score: MockHealthScore | null) => void;
-  setFactors: (factors: MockHealthFactor[]) => void;
-  setRecommendations: (recommendations: MockHealthRecommendation[]) => void;
-  setSavings: (savings: MockPotentialSavings | null) => void;
-  setTrend: (trend: MockHealthTrend | null) => void;
-  setStatus: (status: MockHealthStatus) => void;
+  setScore: (score: HealthScore | null) => void;
+  setFactors: (factors: HealthFactor[]) => void;
+  setRecommendations: (recommendations: HealthRecommendation[]) => void;
+  setSavings: (savings: PotentialSavings | null) => void;
+  setTrend: (trend: HealthTrend | null) => void;
+  setStatus: (status: HealthStatus) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-
-  analyze: () => void;
   reset: () => void;
+  fetchHealthData: (volumeId?: string) => Promise<void>;
 }
 
 export const useHealthStore = create<HealthStore>((set) => ({
@@ -50,16 +43,20 @@ export const useHealthStore = create<HealthStore>((set) => ({
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
 
-  analyze: () => set({ status: "analyzing", loading: true, error: null }),
-  reset: () =>
-    set({
-      score: null,
-      factors: [],
-      recommendations: [],
-      savings: null,
-      trend: null,
-      status: "idle",
-      loading: false,
-      error: null,
-    }),
+  reset: () => set({
+    score: null, factors: [], recommendations: [], savings: null, trend: null, status: "idle", error: null,
+  }),
+
+  fetchHealthData: async () => {
+    set({ loading: true, error: null });
+    try {
+      const result = await fetchHealthScore();
+      set({
+        score: result.score, factors: result.factors, recommendations: result.recommendations,
+        savings: result.savings, trend: result.trend, status: "ready", loading: false,
+      });
+    } catch (err) {
+      set({ loading: false, error: String(err) });
+    }
+  },
 }));

@@ -1,93 +1,89 @@
 import { create } from "zustand";
-import type { MockCacheCategory, MockCacheSummary, MockCacheFilter, MockCleanupPreview, MockCacheStatus } from "@/mocks/cache";
-import { defaultCacheFilter } from "@/mocks/cache";
+import type { CacheCategory, CacheSummary, CacheFilter, CleanupPreview, CacheStatus } from "@/types";
+import { scanCacheTauri, cleanCacheTauri, computePreview } from "@/bridge";
 
 interface CleanerStore {
-  categories: MockCacheCategory[];
-  summary: MockCacheSummary | null;
-  filter: MockCacheFilter;
-  preview: MockCleanupPreview | null;
-  status: MockCacheStatus;
+  categories: CacheCategory[];
+  summary: CacheSummary | null;
+  preview: CleanupPreview | null;
+  status: CacheStatus;
   loading: boolean;
+  error: string | null;
+  selectedCategoryId: string | null;
+  filter: CacheFilter;
 
-  setCategories: (categories: MockCacheCategory[]) => void;
-  setSummary: (summary: MockCacheSummary | null) => void;
-  updateFilter: (partial: Partial<MockCacheFilter>) => void;
-  setPreview: (preview: MockCleanupPreview | null) => void;
-  setStatus: (status: MockCacheStatus) => void;
+  setCategories: (categories: CacheCategory[]) => void;
+  setSummary: (summary: CacheSummary | null) => void;
+  setPreview: (preview: CleanupPreview | null) => void;
+  setStatus: (status: CacheStatus) => void;
   setLoading: (loading: boolean) => void;
-
+  setError: (error: string | null) => void;
+  setSelectedCategoryId: (id: string | null) => void;
+  setFilter: (filter: Partial<CacheFilter>) => void;
   selectAll: (selected: boolean) => void;
-  selectCategory: (categoryId: string, selected: boolean) => void;
-  selectEntry: (entryId: string, selected: boolean) => void;
-  analyze: () => void;
+  toggleEntry: (entryId: string, selected: boolean) => void;
   previewCleanup: () => void;
-  startCleanup: () => void;
-  cancelCleanup: () => void;
+  fetchCacheData: () => Promise<void>;
+  startCleanupAction: () => Promise<void>;
 }
 
-function recalcTotal(categories: MockCacheCategory[]): number {
-  return categories.reduce((s, c) => s + c.total_size, 0);
-}
+const DEFAULT_FILTER: CacheFilter = { search: "", categoryFilter: "all", safetyFilter: "all" };
 
 export const useCleanerStore = create<CleanerStore>((set, get) => ({
   categories: [],
   summary: null,
-  filter: defaultCacheFilter,
   preview: null,
   status: "idle",
   loading: false,
+  error: null,
+  selectedCategoryId: null,
+  filter: DEFAULT_FILTER,
 
-  setCategories: (categories) => {
-    const total = recalcTotal(categories);
-    set({
-      categories,
-      loading: false,
-    });
-    const s = get().summary;
-    if (s) {
-      set({ summary: { ...s, total_cache_size: total } });
+  setCategories: (categories) => set({ categories }),
+  setSummary: (summary) => set({ summary }),
+  setPreview: (preview) => set({ preview }),
+  setStatus: (status) => set({ status }),
+  setLoading: (loading) => set({ loading }),
+  setError: (error) => set({ error }),
+  setSelectedCategoryId: (id) => set({ selectedCategoryId: id }),
+  setFilter: (filter) => set((s) => ({ filter: { ...s.filter, ...filter } })),
+
+  selectAll: (selected) => set((s) => ({
+    categories: s.categories.map((c) => ({
+      ...c,
+      entries: c.entries.map((e) => ({ ...e, selected })),
+    })),
+  })),
+
+  toggleEntry: (entryId, selected) => set((s) => ({
+    categories: s.categories.map((c) => ({
+      ...c,
+      entries: c.entries.map((e) => e.id === entryId ? { ...e, selected } : e),
+    })),
+  })),
+
+  previewCleanup: () => {
+    const preview = computePreview(get().categories);
+    set({ preview, status: "previewing" });
+  },
+
+  fetchCacheData: async () => {
+    set({ loading: true, error: null });
+    try {
+      const result = await scanCacheTauri();
+      set({ categories: result.categories, summary: result.summary, loading: false, status: "ready" });
+    } catch (err) {
+      set({ loading: false, error: String(err) });
     }
   },
 
-  setSummary: (summary) => set({ summary }),
-  updateFilter: (partial) => set((s) => ({ filter: { ...s.filter, ...partial } })),
-
-  setPreview: (preview) => set({ preview }),
-
-  setStatus: (status) => set({ status }),
-  setLoading: (loading) => set({ loading }),
-
-  selectAll: (selected) =>
-    set((s) => ({
-      categories: s.categories.map((cat) => ({
-        ...cat,
-        entries: cat.entries.map((e) => ({ ...e, selected })),
-      })),
-      preview: null,
-    })),
-
-  selectCategory: (categoryId, selected) =>
-    set((s) => ({
-      categories: s.categories.map((cat) =>
-        cat.id === categoryId
-          ? { ...cat, entries: cat.entries.map((e) => ({ ...e, selected })) }
-          : cat,
-      ),
-      preview: null,
-    })),
-
-  selectEntry: (entryId, selected) =>
-    set((s) => ({
-      categories: s.categories.map((cat) => ({
-        ...cat,
-        entries: cat.entries.map((e) => (e.id === entryId ? { ...e, selected } : e)),
-      })),
-      preview: null,
-    })),
-
-  analyze: () => set({ status: "analyzing", loading: true }),
-  previewCleanup: () => set({ status: "previewing" }),
-  startCleanup: () => set({ status: "cleaning" }),
-  cancelCleanup: () => set({ status: "cancelled" }),
+  startCleanupAction: async () => {
+    set({ status: "cleaning", error: null });
+    try {
+      await cleanCacheTauri();
+      set({ status: "completed" });
+    } catch (err) {
+      set({ status: "failed", error: String(err) });
+    }
+  },
 }));
