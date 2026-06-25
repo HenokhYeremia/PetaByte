@@ -1,12 +1,5 @@
 import { useCallback } from "react";
 import { useHealthStore } from "@/stores/healthStore";
-import {
-  mockHealthScore,
-  mockHealthFactors,
-  mockHealthRecommendations,
-  mockPotentialSavings,
-  mockHealthTrend,
-} from "@/mocks/health";
 import { HealthScoreHero } from "@/components/health/HealthScoreHero";
 import { ScoreBreakdown } from "@/components/health/ScoreBreakdown";
 import { RecommendationPanel } from "@/components/health/RecommendationPanel";
@@ -24,36 +17,12 @@ export function HealthScorePage() {
     status,
     loading,
     error,
-    setScore,
-    setFactors,
-    setRecommendations,
-    setSavings,
-    setTrend,
-    setStatus,
-    setLoading,
-    setError,
-    analyze,
+    fetchHealthData,
   } = useHealthStore();
 
-  const handleAnalyze = useCallback(() => {
-    analyze();
-    setScore(null);
-    setFactors([]);
-    setRecommendations([]);
-    setSavings(null);
-    setTrend(null);
-    setError(null);
-
-    setTimeout(() => {
-      setScore(mockHealthScore);
-      setFactors(mockHealthFactors);
-      setRecommendations(mockHealthRecommendations);
-      setSavings(mockPotentialSavings);
-      setTrend(mockHealthTrend);
-      setStatus("ready");
-      setLoading(false);
-    }, 300);
-  }, [analyze, setScore, setFactors, setRecommendations, setSavings, setTrend, setStatus, setLoading, setError]);
+  const handleAnalyze = useCallback(async () => {
+    await fetchHealthData();
+  }, [fetchHealthData]);
 
   const handleRetry = useCallback(() => {
     handleAnalyze();
@@ -111,6 +80,12 @@ export function HealthScorePage() {
           )}
         </button>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+          {error}
+        </div>
+      )}
 
       {isEmpty ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 py-16 text-center dark:border-zinc-800">

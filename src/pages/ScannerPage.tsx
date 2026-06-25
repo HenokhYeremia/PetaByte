@@ -1,12 +1,11 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { ScanConfigPanel } from "@/components/scanner/ScanConfigPanel";
 import { ScanControlPanel } from "@/components/scanner/ScanControlPanel";
 import { ScanProgressSection } from "@/components/scanner/ScanProgressSection";
 import { ScanResultSummary } from "@/components/scanner/ScanResultSummary";
 import { RecentScanHistory } from "@/components/scanner/RecentScanHistory";
 import { useScanStore } from "@/stores/scanStore";
-import { mockScanProgress, mockScanResult, mockScanHistory } from "@/mocks/scanner";
-import type { MockScanResult } from "@/mocks/scanner";
+import { useScanEvents } from "@/hooks/useTauri";
 
 export function ScannerPage() {
   const {
@@ -28,68 +27,39 @@ export function ScannerPage() {
     toggleIgnoreRule,
     setStatus,
     setCurrentProgress,
-    setScanResult,
-    setScanHistory,
     setSelectedHistoryId,
+    startScanAction,
+    cancelScanAction,
+    fetchDrivesAction,
+    error,
   } = useScanStore();
 
+  const { progress: eventProgress } = useScanEvents();
   const currentProgressRef = useRef(currentProgress);
   currentProgressRef.current = currentProgress;
 
-  const handleStart = useCallback(() => {
+  useEffect(() => {
+    if (drives.length === 0) fetchDrivesAction();
+  }, [drives.length, fetchDrivesAction]);
+
+  useEffect(() => {
+    if (eventProgress && status === "scanning") {
+      setCurrentProgress(eventProgress);
+    }
+  }, [eventProgress, status, setCurrentProgress]);
+
+  const handleStart = useCallback(async () => {
     if (!selectedPath) {
       setPathError("Please select a folder to scan");
       return;
     }
-    setStatus("scanning");
-    setCurrentProgress({ ...mockScanProgress, status: "scanning" });
-    setScanResult(null);
-  }, [selectedPath, setStatus, setCurrentProgress, setScanResult, setPathError]);
+    await startScanAction(selectedPath);
+  }, [selectedPath, startScanAction, setPathError]);
 
-  const handlePause = useCallback(() => {
-    setStatus("paused");
-    setCurrentProgress({ ...mockScanProgress, status: "paused" });
-  }, [setStatus, setCurrentProgress]);
-
-  const handleResume = useCallback(() => {
-    setStatus("scanning");
-    setCurrentProgress({ ...mockScanProgress, status: "scanning" });
-  }, [setStatus, setCurrentProgress]);
-
-  const handleCancel = useCallback(() => {
-    const cp = currentProgressRef.current;
-    setStatus("cancelled");
-    setCurrentProgress(cp ? { ...cp, status: "cancelled" as const } : null);
-    const totalFiles = cp?.scanned_files ?? 0;
-    const result: MockScanResult = {
-      ...mockScanResult,
-      status: "cancelled",
-      total_files: totalFiles,
-      total_size: cp?.scanned_size ?? 0,
-      total_directories: cp?.total_directories ?? 0,
-      duration_secs: cp?.elapsed_secs ?? 0,
-    };
-    setScanResult(result);
-    if (selectedPath) {
-      setScanHistory([
-        {
-          id: `hist-${Date.now()}`,
-          path: selectedPath,
-          total_files: totalFiles,
-          total_directories: cp?.total_directories ?? 0,
-          total_size: cp?.scanned_size ?? 0,
-          duration_secs: cp?.elapsed_secs ?? 0,
-          status: "cancelled",
-          started_at: new Date().toISOString(),
-        },
-        ...scanHistory,
-      ]);
-    }
-  }, [setStatus, setCurrentProgress, setScanResult, selectedPath, scanHistory, setScanHistory]);
-
-  const handleBrowse = useCallback(() => {
-    setSelectedPath("D:\\Projects\\petabyte");
-  }, [setSelectedPath]);
+  const handlePause = useCallback(() => setStatus("paused"), [setStatus]);
+  const handleResume = useCallback(() => setStatus("scanning"), [setStatus]);
+  const handleCancel = useCallback(async () => { await cancelScanAction(); }, [cancelScanAction]);
+  const handleBrowse = useCallback(() => setSelectedPath(""), [setSelectedPath]);
 
   const canStart = status === "idle" || status === "completed" || status === "cancelled" || status === "failed";
   const isScanActive = status === "scanning" || status === "paused";
@@ -99,6 +69,12 @@ export function ScannerPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Filesystem Scanner</h1>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+          {error}
+        </div>
+      )}
 
       {!isScanActive && (
         <ScanConfigPanel
@@ -125,7 +101,7 @@ export function ScannerPage() {
         disabled={!selectedPath && canStart}
       />
 
-      {isScanActive && (
+      {isScanActive && currentProgress && (
         <ScanProgressSection progress={currentProgress} />
       )}
 
@@ -134,7 +110,7 @@ export function ScannerPage() {
       )}
 
       <RecentScanHistory
-        history={scanHistory.length > 0 ? scanHistory : mockScanHistory}
+        history={scanHistory}
         onSelect={setSelectedHistoryId}
         selectedId={selectedHistoryId}
       />

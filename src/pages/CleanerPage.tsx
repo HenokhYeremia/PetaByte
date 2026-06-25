@@ -6,7 +6,6 @@ import { CacheDetailsTable } from "@/components/cleaner/CacheDetailsTable";
 import { CacheCleanupPreview } from "@/components/cleaner/CacheCleanupPreview";
 import { CacheActions } from "@/components/cleaner/CacheActions";
 import { useCleanerStore } from "@/stores/cleanerStore";
-import { mockCategories, mockCacheSummary, computeCleanupPreview } from "@/mocks/cache";
 
 export function CleanerPage() {
   const {
@@ -16,18 +15,14 @@ export function CleanerPage() {
     preview,
     status,
     loading,
-    setCategories,
-    setSummary,
-    updateFilter,
-    setPreview,
-    setStatus,
-    setLoading,
+    error,
+    setFilter,
     selectAll,
-    selectEntry,
-    analyze,
+    toggleEntry,
+    fetchCacheData,
     previewCleanup,
-    startCleanup,
-    cancelCleanup,
+    startCleanupAction,
+    setStatus,
   } = useCleanerStore();
 
   const hasData = categories.length > 0;
@@ -42,35 +37,10 @@ export function CleanerPage() {
     [categories],
   );
 
-  const handleAnalyze = useCallback(() => {
-    analyze();
-    setTimeout(() => {
-      setCategories(mockCategories);
-      setSummary(mockCacheSummary);
-      setStatus("previewing");
-    }, 300);
-  }, [analyze, setCategories, setSummary, setStatus]);
-
-  const handlePreviewCleanup = useCallback(() => {
-    const p = computeCleanupPreview(categories);
-    setPreview(p);
-    previewCleanup();
-  }, [categories, setPreview, previewCleanup]);
-
-  const handleStartCleanup = useCallback(() => {
-    startCleanup();
-    setTimeout(() => {
-      setStatus("completed");
-    }, 300);
-  }, [startCleanup, setStatus]);
-
-  const handleLoadData = useCallback(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setCategories(mockCategories);
-      setSummary(mockCacheSummary);
-    }, 300);
-  }, [setCategories, setSummary, setLoading]);
+  const handleAnalyze = useCallback(async () => { await fetchCacheData(); }, [fetchCacheData]);
+  const handlePreviewCleanup = useCallback(() => { previewCleanup(); }, [previewCleanup]);
+  const handleStartCleanup = useCallback(async () => { await startCleanupAction(); }, [startCleanupAction]);
+  const handleLoadData = useCallback(async () => { await fetchCacheData(); }, [fetchCacheData]);
 
   return (
     <div className="space-y-6">
@@ -100,6 +70,18 @@ export function CleanerPage() {
         loading={loading}
       />
 
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+          {error}
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+        </div>
+      )}
+
       {hasData && (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[420px_1fr]">
           <div className="space-y-6">
@@ -109,10 +91,7 @@ export function CleanerPage() {
               onSelectCategory={() => {}}
               loading={false}
             />
-            <CacheCleanupPreview
-              preview={preview}
-              loading={false}
-            />
+            <CacheCleanupPreview preview={preview} loading={false} />
           </div>
 
           <div className="space-y-6">
@@ -120,7 +99,7 @@ export function CleanerPage() {
               <CacheSearchFilter
                 filter={filter}
                 categories={categoryOptions}
-                onFilterChange={updateFilter}
+                onFilterChange={setFilter}
               />
               <CacheActions
                 status={status}
@@ -128,7 +107,7 @@ export function CleanerPage() {
                 onAnalyze={handleAnalyze}
                 onPreview={handlePreviewCleanup}
                 onClean={handleStartCleanup}
-                onCancel={cancelCleanup}
+                onCancel={() => setStatus("ready")}
                 loading={false}
               />
             </div>
@@ -136,7 +115,7 @@ export function CleanerPage() {
             <CacheDetailsTable
               categories={categories}
               filter={filter}
-              onSelectEntry={selectEntry}
+              onSelectEntry={toggleEntry}
               onSelectAll={selectAll}
               loading={false}
             />
@@ -144,10 +123,10 @@ export function CleanerPage() {
         </div>
       )}
 
-      {!hasData && !loading && (
+      {!hasData && !loading && !error && (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <p className="text-zinc-500 dark:text-zinc-400">
-            No cache data loaded. Click "Load Cache Data" to populate with sample data.
+            No cache data loaded. Click &ldquo;Load Cache Data&rdquo; to analyze cache usage.
           </p>
         </div>
       )}

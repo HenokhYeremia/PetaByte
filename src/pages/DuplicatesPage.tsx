@@ -4,37 +4,42 @@ import { SearchAndFilter } from "@/components/duplicates/SearchAndFilter";
 import { DuplicateGroupList } from "@/components/duplicates/DuplicateGroupList";
 import { DuplicateDetailsPanel } from "@/components/duplicates/DuplicateDetailsPanel";
 import { useDuplicateStore } from "@/stores/duplicateStore";
-import { mockDuplicateGroups, mockDuplicateSummary } from "@/mocks/duplicates";
-import type { MockSortConfig } from "@/mocks/duplicates";
-function matchesFilter(group: { common_parent: string; extensions: string[]; file_count: number; file_size: number }, filter: { folder: string; extensions: string[]; countMin: number | null; countMax: number | null; sizeMin: number | null; sizeMax: number | null }) {
-  const { folder, extensions, countMin, countMax, sizeMin, sizeMax } = filter;
+import type { DuplicateGroup, DuplicateSortConfig } from "@/types";
 
-  if (folder && !group.common_parent.toLowerCase().includes(folder.toLowerCase())) return false;
-  if (extensions.length > 0 && !extensions.some((ext) => group.extensions.includes(ext))) return false;
+function matchesFilter(group: DuplicateGroup, filter: { folder: string; extensions: string[]; countMin: number | null; countMax: number | null; sizeMin: number | null; sizeMax: number | null }) {
+  const { folder, extensions, countMin, countMax, sizeMin, sizeMax } = filter;
+  const extSet = new Set(group.files.map((f) => f.name.split(".").pop() ?? "").filter(Boolean));
+  const commonParent = group.files.length > 0
+    ? group.files.reduce((_p, f) => { const parts = f.path.split(/[/\\]/); return parts.slice(0, -1).join("/"); }, "")
+    : "";
+  if (folder && !commonParent.toLowerCase().includes(folder.toLowerCase())) return false;
+  if (extensions.length > 0 && !extensions.some((ext) => extSet.has(ext))) return false;
   if (countMin !== null && group.file_count < countMin) return false;
   if (countMax !== null && group.file_count > countMax) return false;
   if (sizeMin !== null && group.file_size < sizeMin) return false;
   if (sizeMax !== null && group.file_size > sizeMax) return false;
-
   return true;
 }
 
-function sortGroups(groups: typeof mockDuplicateGroups, config: MockSortConfig) {
+function sortGroups(groups: DuplicateGroup[], config: DuplicateSortConfig) {
   return [...groups].sort((a, b) => {
     let cmp: number;
     switch (config.field) {
-      case "file_size":
+      case "size":
         cmp = a.file_size - b.file_size;
         break;
-      case "file_count":
+      case "count":
         cmp = a.file_count - b.file_count;
         break;
-      case "total_wasted_bytes":
+      case "wasted":
         cmp = a.total_wasted_bytes - b.total_wasted_bytes;
         break;
-      case "extension":
-        cmp = (a.extensions[0] || "").localeCompare(b.extensions[0] || "");
+      case "name": {
+        const aName = a.files[0]?.name ?? "";
+        const bName = b.files[0]?.name ?? "";
+        cmp = aName.localeCompare(bName);
         break;
+      }
       default:
         cmp = 0;
     }
@@ -47,61 +52,36 @@ export function DuplicatesPage() {
     groups,
     summary,
     loading,
+    error,
     selectedGroupId,
     selectedFileIds,
-    filter,
+    filterState,
     sortConfig,
-    setGroups,
-    setSummary,
-    setLoading,
-    selectGroup,
+    setFilterState,
+    setSortConfig,
     toggleFile,
-    toggleGroup,
-    updateFilter,
-    setSortField,
-    toggleSortDirection,
-    previewMove,
-    previewDelete,
-    smartMove,
-    exportReport,
+    selectAllGroup,
+    fetchDuplicatesAction,
   } = useDuplicateStore();
 
-  const filtered = useMemo(() => groups.filter((g) => matchesFilter(g, filter)), [groups, filter]);
+  const advancedFilter = useMemo(() => {
+    return { folder: "", extensions: [] as string[], countMin: null as number | null, countMax: null as number | null, sizeMin: null as number | null, sizeMax: null as number | null };
+  }, []);
+
+  const filtered = useMemo(() => groups.filter((g) => matchesFilter(g, advancedFilter)), [groups, advancedFilter]);
   const sorted = useMemo(() => sortGroups(filtered, sortConfig), [filtered, sortConfig]);
   const selectedGroup = useMemo(
     () => (selectedGroupId ? groups.find((g) => g.id === selectedGroupId) ?? null : null),
     [groups, selectedGroupId],
   );
 
-  const handleLoadData = useCallback(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setGroups(mockDuplicateGroups);
-      setSummary(mockDuplicateSummary);
-    }, 300);
-  }, [setGroups, setSummary, setLoading]);
+  const handleLoadData = useCallback(async () => {
+    await fetchDuplicatesAction();
+  }, [fetchDuplicatesAction]);
 
-  const handleStartScan = useCallback(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setGroups(mockDuplicateGroups);
-      setSummary(mockDuplicateSummary);
-    }, 300);
-  }, [setGroups, setSummary, setLoading]);
-
-  const handleSelectAll = useCallback(
-    (select: boolean) => {
-      if (selectedGroup) {
-        for (const f of selectedGroup.files) {
-          const next = new Set(selectedFileIds);
-          if (select) next.add(f.id);
-          else next.delete(f.id);
-          useDuplicateStore.setState({ selectedFileIds: next });
-        }
-      }
-    },
-    [selectedGroup, selectedFileIds],
-  );
+  const handleSelectAll = useCallback((select: boolean) => {
+    if (selectedGroup) selectAllGroup(selectedGroup.id, select);
+  }, [selectedGroup, selectAllGroup]);
 
   const hasData = groups.length > 0;
   const showDetails = selectedGroupId !== null;
@@ -127,7 +107,7 @@ export function DuplicatesPage() {
         {hasData && (
           <button
             type="button"
-            onClick={handleStartScan}
+            onClick={handleLoadData}
             className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500"
           >
             Run Scan
@@ -140,11 +120,11 @@ export function DuplicatesPage() {
       {hasData && (
         <>
           <SearchAndFilter
-            filter={filter}
-            onFilterChange={updateFilter}
+            filter={filterState}
+            onFilterChange={(p) => setFilterState(p)}
             sortConfig={sortConfig}
-            onSortChange={setSortField}
-            onSortDirectionToggle={toggleSortDirection}
+            onSortChange={(field) => setSortConfig({ field, direction: sortConfig.direction })}
+            onSortDirectionToggle={() => setSortConfig({ field: sortConfig.field, direction: sortConfig.direction === "asc" ? "desc" : "asc" })}
           />
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_420px]">
@@ -152,22 +132,22 @@ export function DuplicatesPage() {
               groups={sorted}
               selectedGroupId={selectedGroupId}
               selectedFileIds={selectedFileIds}
-              onSelectGroup={selectGroup}
-              onToggleGroup={toggleGroup}
+              onSelectGroup={(id) => useDuplicateStore.getState().setSelectedGroupId(id)}
+              onToggleGroup={(id, select) => selectAllGroup(id, select)}
               onToggleFile={toggleFile}
             />
 
             {showDetails && (
               <div className="xl:block">
                 <DuplicateDetailsPanel
-                  group={selectedGroup}
+                  group={selectedGroup!}
                   selectedFileIds={selectedFileIds}
                   onToggleFile={toggleFile}
                   onSelectAll={handleSelectAll}
-                  onPreviewMove={previewMove}
-                  onPreviewDelete={previewDelete}
-                  onSmartMove={smartMove}
-                  onExportReport={exportReport}
+                  onPreviewMove={() => {}}
+                  onPreviewDelete={() => {}}
+                  onSmartMove={() => {}}
+                  onExportReport={() => {}}
                 />
               </div>
             )}
@@ -175,11 +155,23 @@ export function DuplicatesPage() {
         </>
       )}
 
-      {!hasData && !loading && (
+      {!hasData && !loading && !error && (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <p className="text-zinc-500 dark:text-zinc-400">
-            No duplicate data loaded. Click "Load Duplicate Data" to populate with sample data.
+            No duplicate data loaded. Click &ldquo;Load Duplicate Data&rdquo; to scan for duplicates.
           </p>
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+          Failed to load duplicates: {error}
         </div>
       )}
     </div>
