@@ -13,3 +13,10 @@ rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 
 [env]
 RUST_LOG = "info"
+
+[alias]
+rb = "build --release"
+rcb = "check --release"
+rt = "test --release"
+rr = "run --release"
+tauri-build = "run --package petabyte --bin petabyte -- tauri build"

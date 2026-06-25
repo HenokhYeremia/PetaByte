@@ -12,13 +12,15 @@
   "app": {
     "windows": [
       {
-        "title": "PetaByte",
+        "title": "PetaByte — Storage Analyzer & Optimizer",
         "width": 1200,
         "height": 800,
         "minWidth": 900,
         "minHeight": 600,
         "resizable": true,
-        "center": true
+        "center": true,
+        "fullscreen": false,
+        "decorations": true
       }
     ],
     "security": {
@@ -27,7 +29,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["msi", "nsis"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -36,6 +38,52 @@
       "icons/icon.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "publisher": "PetaByte Contributors",
+    "copyright": "Copyright (c) 2026 PetaByte Contributors",
+    "category": "Utility",
+    "shortDescription": "PetaByte — Intelligent storage analysis and optimization",
+    "longDescription": "PetaByte is a cross-platform desktop application that gives users deep visibility and intelligent control over their storage. It transforms raw file-system data into actionable insights — finding duplicates, cleaning developer caches, moving files safely, and scoring storage health — all with a privacy-first, local-only architecture.",
+    "windows": {
+      "wix": {
+        "language": "en-US"
+      },
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "installMode": "currentUser",
+        "languages": ["English"]
+      },
+      "allowDowngrades": false,
+      "timestampUrl": "",
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "12.0",
+      "entitlements": "entitlements/entitlements.plist",
+      "frameworks": [],
+      "exceptionDomain": "",
+      "providerShortName": "",
+      "signingIdentity": null
+    },
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0",
+          "libappindicator3-1",
+          "librsvg2-2",
+          "libjavascriptcoregtk-4.1-0",
+          "libsoup-3.0-0"
+        ]
+      },
+      "appimage": {
+        "bundleMediaFramework": true
+      },
+      "rpm": {
+        "depends": ["webkit2gtk4.1", "gtk3", "libappindicator-gtk3", "librsvg2"]
+      }
+    }
   }
 }
